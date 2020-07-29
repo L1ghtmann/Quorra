@@ -23,19 +23,33 @@
 	for(AVCaptureDeviceInput* input in self.inputs){
         AVCaptureDevice *device = [input device];
 
-		//For some methods (such as this one), my code must be run on the main thread, aka "dispatch_get_main_queue," otherwise the application being used crashes
-		//See https://stackoverflow.com/a/15169974 for an explanation as to why that is 
+		//In every method used here you'll see a check for (if([NSThread isMainThread]){}) and a dispatch to (dispatch_sync(dispatch_get_main_queue(), ^{})) the main thread
+		//The reason being many applications crash if we try to make UI changes on the background thread ("threading violation: expected the main thread") . . .
+		//or if we dispatch to the main thread when we're already on it (EXC_BREAKPOINT (SIGTRAP))
+		//See https://www.quora.com/Why-must-the-UI-always-be-updated-on-Main-Thread for a better explanation as to why that is 
 		if([device.localizedName isEqualToString:@"Back Camera"] || [device.localizedName isEqualToString:@"Front Camera"]) {
-			dispatch_sync(dispatch_get_main_queue(), ^{
+			if([NSThread isMainThread]){
 				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = YES;
 				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-			});
+			}
+			else{
+				dispatch_sync(dispatch_get_main_queue(), ^{
+					((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = YES;
+					[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+				});
+			}
         }
 		if([device.localizedName isEqualToString:@"iPhone Microphone"]){
-			dispatch_sync(dispatch_get_main_queue(), ^{
+			if([NSThread isMainThread]){
 				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
 				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-			});
+			}
+			else{
+				dispatch_sync(dispatch_get_main_queue(), ^{
+					((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
+					[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+				});
+			}
         }
 	}
 }
@@ -47,9 +61,18 @@
 		AVCaptureDevice *device = [input device];
 
 		if([device.localizedName isEqualToString:@"Back Camera"] || [device.localizedName isEqualToString:@"Front Camera"] || [device.localizedName isEqualToString:@"iPhone Microphone"]) {
-			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = NO;
-			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
-			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+			if([NSThread isMainThread]){
+				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = NO;
+				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
+				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+			}
+			else{
+				dispatch_sync(dispatch_get_main_queue(), ^{
+					((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = NO;
+					((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
+					[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+				});
+			}
 		}
 	}
 }
@@ -64,7 +87,7 @@
 	TheGrid *container = [((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) container];
 
 	if([self._localizedName isEqualToString:@"Camera"]){
-		dispatch_sync(dispatch_get_main_queue(), ^{
+		if([NSThread isMainThread]){
 			if(!container.windowScene && [[UIApplication sharedApplication] windows].count){
 				UIWindow *appWindow = [[[UIApplication sharedApplication] windows] objectAtIndex:0]; 
 				container.windowScene = appWindow.windowScene;
@@ -72,7 +95,18 @@
 			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = YES;
 			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
 			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-		});
+		}
+		else{
+			dispatch_sync(dispatch_get_main_queue(), ^{
+				if(!container.windowScene && [[UIApplication sharedApplication] windows].count){
+					UIWindow *appWindow = [[[UIApplication sharedApplication] windows] objectAtIndex:0]; 
+					container.windowScene = appWindow.windowScene;
+				}
+				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = YES;
+				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
+				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+			});
+		}
 	}
 }
 
@@ -80,9 +114,18 @@
 	%orig;
 
 	if([self._localizedName isEqualToString:@"Camera"]){
-		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = NO;
-		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
-		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+		if([NSThread isMainThread]){
+			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = NO;
+			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
+			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+		}
+		else{
+			dispatch_sync(dispatch_get_main_queue(), ^{
+				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = NO;
+				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
+				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+			});
+		}
 	}
 }
 %end
@@ -95,8 +138,16 @@
 	%orig;
 
 	if(([self.category isEqualToString:@"AVAudioSessionCategoryRecord"] || [self.category isEqualToString:@"AVAudioSessionCategoryMultiRoute"] || [self.category isEqualToString:@"AVAudioSessionCategoryPlayAndRecord"]) && ((AVAudioSessionPortDescription*)self.currentRoute.inputs.firstObject).selectedDataSource){
-		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
-		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+		if([NSThread isMainThread]){
+			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
+			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+		}
+		else{
+			dispatch_sync(dispatch_get_main_queue(), ^{
+				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
+				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+			});
+		}
 	}
 }
 
@@ -104,8 +155,16 @@
 	%orig;
 
 	if(!([self.category isEqualToString:@"AVAudioSessionCategoryRecord"] || [self.category isEqualToString:@"AVAudioSessionCategoryMultiRoute"] || [self.category isEqualToString:@"AVAudioSessionCategoryPlayAndRecord"]) && ((AVAudioSessionPortDescription*)self.currentRoute.inputs.firstObject).selectedDataSource){
-		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
-		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+		if([NSThread isMainThread]){
+			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
+			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+		}
+		else{
+			dispatch_sync(dispatch_get_main_queue(), ^{
+				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
+				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+			});
+		}
 	}
 }
 %end
@@ -118,20 +177,41 @@
 
 	TheGrid *container = [((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) container];
 
-	if(!container.windowScene && [[UIApplication sharedApplication] windows].count){
-		UIWindow *appWindow = [[[UIApplication sharedApplication] windows] objectAtIndex:0]; 
-		container.windowScene = appWindow.windowScene;
-	}
+	if([NSThread isMainThread]){
+		if(!container.windowScene && [[UIApplication sharedApplication] windows].count){
+			UIWindow *appWindow = [[[UIApplication sharedApplication] windows] objectAtIndex:0]; 
+			container.windowScene = appWindow.windowScene;
+		}
 
-	((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
-	[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
+		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+	}
+	else{
+		dispatch_sync(dispatch_get_main_queue(), ^{
+			if(!container.windowScene && [[UIApplication sharedApplication] windows].count){
+				UIWindow *appWindow = [[[UIApplication sharedApplication] windows] objectAtIndex:0]; 
+				container.windowScene = appWindow.windowScene;
+			}
+
+			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
+			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+		});
+	}
 }
 
 -(void)stopDictation{
 	%orig;
-
-	((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
-	[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];	
+	
+	if([NSThread isMainThread]){
+		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
+		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];	
+	}
+	else{
+		dispatch_sync(dispatch_get_main_queue(), ^{
+			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
+			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];	
+		});
+	}
 }
 %end
 
@@ -142,14 +222,27 @@
 	%orig;
 
 	TheGrid *container = [((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) container];
+	
+	if([NSThread isMainThread]){
+		if(!container.windowScene && [[UIApplication sharedApplication] windows].count){
+			UIWindow *appWindow = [[[UIApplication sharedApplication] windows] objectAtIndex:0]; 
+			container.windowScene = appWindow.windowScene;
+		}
 
-	if(!container.windowScene && [[UIApplication sharedApplication] windows].count){
-		UIWindow *appWindow = [[[UIApplication sharedApplication] windows] objectAtIndex:0]; 
-		container.windowScene = appWindow.windowScene;
+		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
+		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
 	}
+	else{
+		dispatch_sync(dispatch_get_main_queue(), ^{
+			if(!container.windowScene && [[UIApplication sharedApplication] windows].count){
+				UIWindow *appWindow = [[[UIApplication sharedApplication] windows] objectAtIndex:0]; 
+				container.windowScene = appWindow.windowScene;
+			}
 
-	((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
-	[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
+			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+		});
+	}
 }
 
 -(void)finishedRecording:(id)arg1 {
@@ -172,16 +265,32 @@
 	%orig;
 
 	if(arg1){
-		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
-		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+		if([NSThread isMainThread]){
+			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
+			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+		}
+		else{
+			dispatch_sync(dispatch_get_main_queue(), ^{
+				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
+				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+			});
+		}
 	}
 }
 
 -(void)endForReason:(long long)arg1{
 	%orig;
 
-	((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
-	[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+	if([NSThread isMainThread]){
+		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
+		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+	}
+	else{
+		dispatch_sync(dispatch_get_main_queue(), ^{
+			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
+			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+		});
+	}
 }
 %end
 
@@ -194,12 +303,24 @@
 	TheGrid *container = [((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) container];
 
 	if(self.location){
-		if(!container.windowScene && [[UIApplication sharedApplication] windows].count){
-			UIWindow *appWindow = [[[UIApplication sharedApplication] windows] objectAtIndex:0]; 
-			container.windowScene = appWindow.windowScene;
+		if([NSThread isMainThread]){
+			if(!container.windowScene && [[UIApplication sharedApplication] windows].count){
+				UIWindow *appWindow = [[[UIApplication sharedApplication] windows] objectAtIndex:0]; 
+				container.windowScene = appWindow.windowScene;
+			}
+			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).gpsIsActive = YES;
+			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
 		}
-		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).gpsIsActive = YES;
-		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+		else{
+			dispatch_sync(dispatch_get_main_queue(), ^{
+				if(!container.windowScene && [[UIApplication sharedApplication] windows].count){
+					UIWindow *appWindow = [[[UIApplication sharedApplication] windows] objectAtIndex:0]; 
+					container.windowScene = appWindow.windowScene;
+				}
+				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).gpsIsActive = YES;
+				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+			});
+		}
 	}
 }
 %end
