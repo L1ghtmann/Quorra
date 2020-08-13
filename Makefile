@@ -10,3 +10,5 @@ Quorra_FILES = Tweak/Tweak.xm Tweak/TheGrid.xm Tweak/FlynnsArcade.m
 Quorra_CFLAGS = -fobjc-arc
 
 include $(THEOS_MAKE_PATH)/tweak.mk
+SUBPROJECTS += quorraprefs
+include $(THEOS_MAKE_PATH)/aggregate.mk

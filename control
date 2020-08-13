@@ -1,6 +1,6 @@
 Package: me.lightmann.quorra
 Name: Quorra
-Version: 1.0.1
+Version: 1.0.3
 Depends: mobilesubstrate, firmware (>= 13.0)
 Architecture: iphoneos-arm
 Description: Purpose: to help the User

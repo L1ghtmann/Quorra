@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Quorra by Lightmann</string>
+		</dict>
+		<dict>
+          <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>me.lightmann.quorraprefs</string>
+			<key>label</key>
+            <string>Enabled (Respring Required)</string>
+            <key>key</key>
+            <string>isEnabled</string>
+            <key>PostNotification</key>
+			<string>me.lightmann.quorraprefs-updated</string>
+			<key>alternateColors</key>
+			<true/>
+        </dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Configuration</string>
+		</dict>
+		<dict>
+          <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>me.lightmann.quorraprefs</string>
+			<key>label</key>
+            <string>Show Gps Indicator</string>
+            <key>key</key>
+            <string>gpsIndicator</string>
+            <key>PostNotification</key>
+			<string>me.lightmann.quorraprefs-updated</string>
+			<key>alternateColors</key>
+			<true/>
+        </dict>
+		<dict>
+          <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>me.lightmann.quorraprefs</string>
+			<key>label</key>
+            <string>Show Microphone Indicator</string>
+            <key>key</key>
+            <string>micIndicator</string>
+            <key>PostNotification</key>
+			<string>me.lightmann.quorraprefs-updated</string>
+			<key>alternateColors</key>
+			<true/>
+        </dict>
+		<dict>
+          <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>me.lightmann.quorraprefs</string>
+			<key>label</key>
+            <string>Show Camera Indicator</string>
+            <key>key</key>
+            <string>camIndicator</string>
+            <key>PostNotification</key>
+			<string>me.lightmann.quorraprefs-updated</string>
+			<key>alternateColors</key>
+			<true/>
+        </dict>
+		<dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>Custom Position</string>
+			<key>footerText</key>
+			<string>Leave blank for default positioning</string>
+        </dict>
+		<dict>
+			<key>cell</key>
+			<string>PSEditTextCell</string>
+			<key>placeholder</key>
+    		<string>#</string>
+			<key>defaults</key>
+			<string>me.lightmann.quorraprefs</string>
+			<key>key</key>
+			<string>xPos</string>
+			<key>keyboard</key>
+			<string>numbers</string>
+			<key>label</key>
+			<string>X Position</string>
+			<key>PostNotification</key>
+			<string>me.lightmann.quorraprefs-updated</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSEditTextCell</string>
+			<key>placeholder</key>
+    		<string>#</string>
+			<key>defaults</key>
+			<string>me.lightmann.quorraprefs</string>
+			<key>key</key>
+			<string>yPos</string>
+			<key>keyboard</key>
+			<string>numbers</string>
+			<key>label</key>
+			<string>Y Position</string>
+			<key>PostNotification</key>
+			<string>me.lightmann.quorraprefs-updated</string>
+		</dict>
+		<dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string></string>
+        </dict>
+		<dict>
+			<key>action</key>
+			<string>respring:</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Apply</string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string>Quorra</string>
+</dict>
+</plist>

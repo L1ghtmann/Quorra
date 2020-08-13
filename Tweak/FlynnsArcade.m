@@ -15,29 +15,35 @@
 	static TheGrid* container = nil;
 	if (!container) {
 		container = [[TheGrid alloc] init];
+		container.rootViewController = ((FlynnsArcade*)[[FlynnsArcade class] sharedInstance]);
 	}
 	return container;
 }
 
 -(void)initiateGrid{
 	if(self.gpsIsActive){
-		[[self container].greenDot setHidden:NO];
+		[[self container].blueDot setHidden:NO];
 	}
 	if(!self.gpsIsActive){
-		[[self container].greenDot setHidden:YES];
+		[[self container].blueDot setHidden:YES];
 	}
 	if(self.micIsActive){
-		[[self container].yellowDot setHidden:NO];
+		[[self container].orangeDot setHidden:NO];
 	}
 	if(!self.micIsActive){
-		[[self container].yellowDot setHidden:YES];
+		[[self container].orangeDot setHidden:YES];
 	}
 	if(self.cameraIsActive){
-		[[self container].redDot setHidden:NO];
+		[[self container].greenDot setHidden:NO];
 	}
 	if(!self.cameraIsActive){
-		[[self container].redDot setHidden:YES];
+		[[self container].greenDot setHidden:YES];
 	}
+}
+
+//since we need it to inherit from UIViewController in order to be a rootvc for TheGrid it now has a "view" which we don't need or want
+-(void)setView:(id)arg1{
+	arg1 = nil;
 }
 
 @end
