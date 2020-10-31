@@ -2,7 +2,7 @@
 #import "Headers.h"
 
 // @interface FlynnsArcade : NSObject
-@interface FlynnsArcade : UIViewController
+@interface FlynnsArcade : UIViewController 
 + (FlynnsArcade*)sharedInstance;
 - (TheGrid*)container;
 -(void)initiateGrid;

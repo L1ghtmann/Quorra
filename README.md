@@ -1,2 +1,2 @@
 # Quorra
-Purpose: to help the User
+iOS 14's indicator dots for iOS 13

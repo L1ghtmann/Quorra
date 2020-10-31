@@ -5,76 +5,15 @@
 #import "Headers.h"
 #import "FlynnsArcade.h"
 
-%group ungrouped
-//Initialize my controller
-%hook SpringBoard
-- (void)applicationDidFinishLaunching:(UIApplication *)application {
-    %orig;
-	[FlynnsArcade sharedInstance];
-}
-%end
+%group camIndicator   
+/* Apple doesn't give direct access to the camera at a low-level and only core methods I could find were for buffer allocation (i.e. when data is being saved), which happens too late in the cycle for what we want (when pixel data becomes available) */
 
-
-//Determine when camera (and its mic) are in use (indirectly) 		
-%hook NSExtension
--(void)_safelyBeginUsing:(id)arg1 {
+// determine when camera is active by checking availability of the flashlight; if flash isn't available cam is active
+%hook SBUIFlashlightController 
+-(void)_updateStateWithAvailable:(BOOL)arg1 level:(unsigned long long)arg2 overheated:(BOOL)arg3 {
 	%orig;
 
-	//In every method used here you'll see a check for (if([NSThread isMainThread]){}) and a dispatch to (dispatch_sync(dispatch_get_main_queue(), ^{})) the main thread
-	//The reason being many applications crash if we try to make UI changes on the background thread ("threading violation: expected the main thread") . . .
-	//or if we dispatch to the main thread when we're already on it (EXC_BREAKPOINT (SIGTRAP))
-	//See https://www.quora.com/Why-must-the-UI-always-be-updated-on-Main-Thread for a better explanation as to why that is 
-
-	if(camIndicator || micIndicator){
-		if([self._localizedName isEqualToString:@"Camera"]){
-			if([NSThread isMainThread]){
-				if(camIndicator) ((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = YES;
-				if(micIndicator) ((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
-				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-			}
-			else{
-				dispatch_sync(dispatch_get_main_queue(), ^{
-					if(camIndicator) ((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = YES;
-					if(micIndicator) ((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
-					[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-				});
-			}
-		}
-	}
-}
-
--(void)_safelyEndUsing:(id)arg1 {
-	%orig;
-
-	if(camIndicator || micIndicator){
-		if([self._localizedName isEqualToString:@"Camera"]){
-			if([NSThread isMainThread]){
-				if(camIndicator) ((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = NO;
-				if(micIndicator) ((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
-				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-			}
-			else{
-				dispatch_sync(dispatch_get_main_queue(), ^{
-					if(camIndicator) ((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = NO;
-					if(micIndicator) ((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO; 
-					[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-				});
-			}
-		}
-	}
-}
-%end
-%end
-
-
-
-%group camIndicator
-//Determine when camera (and it's mic) are in use (directly)
-%hook AVCaptureDeviceInput
--(void)_sourceFormatDidChange:(id)arg1 {
-	%orig;
-
-	if ([self.device hasMediaType:AVMediaTypeVideo] || [self.device hasMediaType:AVMediaTypeMuxed]) {
+	if(!arg1){
 		if([NSThread isMainThread]){
 			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = YES;
 			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
@@ -85,61 +24,66 @@
 				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
 			});
 		}
-    }
+	}
+	else if (arg1){
+		if([NSThread isMainThread]){
+			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = NO;
+			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+		}
+		else{
+			dispatch_sync(dispatch_get_main_queue(), ^{
+				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = NO;
+				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+			});
+		}
+	}
+	else{
+		%orig;
+	}
 }
+%end
+%end
 
--(void)_resetVideoMinFrameDurationOverride{
-	%orig;
+
+%group micIndicator 
+/* may eventually add check for phone calls too since that's the only other edge case not currently accounted for */
+/* no indicator when recording video to match w iOS 14 where camera indicator takes precedent */
+
+//determine when mic is active (pure audio recording)
+%hookf(OSStatus, AudioUnitInitialize, AudioUnit inUnit){
+	OSStatus orig = %orig;
 
 	if([NSThread isMainThread]){
-		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = NO;
+		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
 		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
 	}
 	else{
 		dispatch_sync(dispatch_get_main_queue(), ^{
-			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = NO;
+			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
 			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
 		});
 	}
+
+    return orig;
 }
-%end
-%end
 
+//determine when mic is inactive (pure audio recording)
+%hookf(OSStatus, AudioUnitUninitialize, AudioUnit inUnit){
+	OSStatus orig = %orig;
 
-
-%group micIndicator
-//Determine when mic is in use (general) -- doesn't apply to dictation or siri
-%hook SBApplication
--(void)setNowRecordingApplication:(BOOL)arg1 {
-	%orig;
-
-	if(arg1){
-		if([NSThread isMainThread]){
-			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
-			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-		}
-		else{
-			dispatch_sync(dispatch_get_main_queue(), ^{
-				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
-				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-			});
-		}
+	if([NSThread isMainThread]){
+		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
+		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
 	}
-	if(!arg1){
-		if([NSThread isMainThread]){
+	else{
+		dispatch_sync(dispatch_get_main_queue(), ^{
 			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
 			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-		}
-		else{
-			dispatch_sync(dispatch_get_main_queue(), ^{
-				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
-				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-			});
-		}	
+		});
 	}
-}
-%end
 
+    return orig;
+}
 
 //Determine when dictation is in use (assumption is that if dictation is occurring the mic is being used)
 %hook UIDictationController
@@ -173,7 +117,6 @@
 	}
 }
 %end
-
 
 //Determine when Siri is in use (assumption is that if siri is running the mic is being used)
 %hook AFUISiriSession
@@ -212,10 +155,28 @@
 %end
 
 
-
 %group gpsIndicator
-//Determine when gps is in use 	
+//Determine when device location is being accessed (i.e. gps in use) 	
 %hook CLLocationManager 
+// covers most apps
+-(void)setDelegate:(id)arg1 {
+	%orig;
+
+	if(self.location){
+		if([NSThread isMainThread]){
+			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).gpsIsActive = YES;
+			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+		}
+		else{
+			dispatch_sync(dispatch_get_main_queue(), ^{
+				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).gpsIsActive = YES;
+				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+			});
+		}
+	}
+}
+
+//covers the edge cases like Maps that doesn't use a delegate
 -(void)onDidBecomeActive:(id)arg1 {
 	%orig;
 
@@ -265,8 +226,6 @@ static void initPrefs() {
 	loadPrefs();
 
 	if(isEnabled){
-		%init(ungrouped)
-
 		if(gpsIndicator)
 			%init(gpsIndicator)
 		
