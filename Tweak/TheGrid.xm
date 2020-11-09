@@ -8,7 +8,7 @@
 
 - (TheGrid *)init {
 	self = [super init];
-	
+
 	__block UIView *blueDot;
 	__block UIView *orangeDot;
 	__block UIView *greenDot;

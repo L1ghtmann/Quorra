@@ -19,7 +19,7 @@
 			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
 		}
 		else{
-			dispatch_sync(dispatch_get_main_queue(), ^{
+			dispatch_sync(dispatch_get_main_queue(), ^{ 
 				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = YES;
 				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
 			});
@@ -31,7 +31,7 @@
 			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
 		}
 		else{
-			dispatch_sync(dispatch_get_main_queue(), ^{
+			dispatch_sync(dispatch_get_main_queue(), ^{ 
 				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = NO;
 				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
 			});
@@ -46,8 +46,8 @@
 
 
 %group micIndicator 
-/* may eventually add check for phone calls too since that's the only other edge case not currently accounted for */
-/* no indicator when recording video to match w iOS 14 where camera indicator takes precedent */
+/* may eventually add check for phone calls too since that's the only other edge case not currently accounted for.
+   no indicator when recording video to match w iOS 14 where camera indicator takes precedent 					  */
 
 //determine when mic is active (pure audio recording)
 %hookf(OSStatus, AudioUnitInitialize, AudioUnit inUnit){
@@ -58,7 +58,8 @@
 		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
 	}
 	else{
-		dispatch_sync(dispatch_get_main_queue(), ^{
+		//dispatch_sync causes some apps to crash or stall and prevents rejailbreaking the device, so using dispatch_async instead (https://iphonemano.blogspot.com/2015/06/dispatchasync-vs-dispatchsync.html)
+		dispatch_async(dispatch_get_main_queue(), ^{ 
 			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
 			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
 		});
@@ -76,7 +77,8 @@
 		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
 	}
 	else{
-		dispatch_sync(dispatch_get_main_queue(), ^{
+		//dispatch_sync causes some apps to crash or stall and prevents rejailbreaking the device, so using dispatch_async instead (https://iphonemano.blogspot.com/2015/06/dispatchasync-vs-dispatchsync.html)
+		dispatch_async(dispatch_get_main_queue(), ^{ 
 			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
 			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
 		});
@@ -85,7 +87,7 @@
     return orig;
 }
 
-//Determine when dictation is in use (assumption is that if dictation is occurring the mic is being used)
+//Determine when dictation is in use
 %hook UIDictationController
 -(void)startDictation{
 	%orig;
@@ -118,26 +120,24 @@
 }
 %end
 
-//Determine when Siri is in use (assumption is that if siri is running the mic is being used)
+//Determine when Siri is in use 
 %hook AFUISiriSession
--(void)setLocalDataSource:(id)arg1{
+-(void)assistantConnectionSpeechRecordingWillBegin:(id)arg1 {
 	%orig;
 
-	if(arg1){
-		if([NSThread isMainThread]){
+	if([NSThread isMainThread]){
+		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
+		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
+	}
+	else{
+		dispatch_sync(dispatch_get_main_queue(), ^{
 			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
 			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-		}
-		else{
-			dispatch_sync(dispatch_get_main_queue(), ^{
-				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
-				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-			});
-		}
+		});
 	}
 }
 
--(void)endForReason:(long long)arg1{
+-(void)assistantConnectionSpeechRecordingDidEnd:(id)arg1 {
 	%orig;
 
 	if([NSThread isMainThread]){
@@ -156,41 +156,24 @@
 
 
 %group gpsIndicator
-//Determine when device location is being accessed (i.e. gps in use) 	
-%hook CLLocationManager 
-// covers most apps
--(void)setDelegate:(id)arg1 {
+/* Quorra now checks for when the device's location is actively being updated, not if it has been or is stored, like previous builds did. 
+   A CLLocation can be stored (i.e. updated once and then stored -- like w the weather) or it can be updated constantly (like w the compass) */
+
+//Determine when location is being pulled (i.e. gps in use) 
+%hook CLLocationManagerStateTracker
+-(void)setUpdatingLocation:(BOOL)arg1 {
 	%orig;
 
-	if(self.location){
-		if([NSThread isMainThread]){
-			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).gpsIsActive = YES;
-			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-		}
-		else{
-			dispatch_sync(dispatch_get_main_queue(), ^{
-				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).gpsIsActive = YES;
-				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-			});
-		}
+	if([NSThread isMainThread]){
+		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).gpsIsActive = arg1;
+		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
 	}
-}
-
-//covers the edge cases like Maps that doesn't use a delegate
--(void)onDidBecomeActive:(id)arg1 {
-	%orig;
-
-	if(self.location){
-		if([NSThread isMainThread]){
-			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).gpsIsActive = YES;
+	else{
+		//dispatch_sync stalls maps, so using dispatch_async instead (https://iphonemano.blogspot.com/2015/06/dispatchasync-vs-dispatchsync.html)
+		dispatch_async(dispatch_get_main_queue(), ^{ 
+			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).gpsIsActive = arg1;
 			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-		}
-		else{
-			dispatch_sync(dispatch_get_main_queue(), ^{
-				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).gpsIsActive = YES;
-				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-			});
-		}
+		});
 	}
 }
 %end
