@@ -1,9 +1,21 @@
+#import "Headers.h"
+#import "FlynnsArcade.h"
+#import <notify.h>
+
 //Lightmann
 //Made during COVID-19
 //Quorra
 
-#import "Headers.h"
-#import "FlynnsArcade.h"
+%group general
+//Initialize my controller
+%hook SpringBoard
+- (void)applicationDidFinishLaunching:(UIApplication *)application {
+    %orig;
+	[FlynnsArcade sharedInstance];
+}
+%end
+%end
+
 
 %group camIndicator   
 /* Apple doesn't give direct access to the camera at a low-level and only core methods I could find were for buffer allocation (i.e. when data is being saved), which happens too late in the cycle for what we want (when pixel data becomes available) */
@@ -13,35 +25,33 @@
 -(void)_updateStateWithAvailable:(BOOL)arg1 level:(unsigned long long)arg2 overheated:(BOOL)arg3 {
 	%orig;
 
-	if(!arg1){
-		if([NSThread isMainThread]){
-			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = YES;
-			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-		}
-		else{
-			dispatch_sync(dispatch_get_main_queue(), ^{ 
-				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = YES;
-				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-			});
-		}
-	}
-	else if (arg1){
-		if([NSThread isMainThread]){
-			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = NO;
-			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-		}
-		else{
-			dispatch_sync(dispatch_get_main_queue(), ^{ 
-				((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).cameraIsActive = NO;
-				[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-			});
-		}
-	}
-	else{
+	if(!arg1)
+		CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/camActive"), nil, nil, true);
+	
+	else if (arg1)
+		CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/camInactive"), nil, nil, true);
+	
+	else
 		%orig;
-	}
 }
 %end
+
+%hook FlynnsArcade
++(void)initialize{
+	%orig;
+
+    int notify_token2;
+
+    // change cam indicator for use
+    notify_register_dispatch("me.lightmann.quorra/camActive", &notify_token2, dispatch_get_main_queue(), ^(int token) {
+        [[[FlynnsArcade sharedInstance] container].greenDot setHidden:NO];
+    });
+	notify_register_dispatch("me.lightmann.quorra/camInactive", &notify_token2, dispatch_get_main_queue(), ^(int token) {
+        [[[FlynnsArcade sharedInstance] container].greenDot setHidden:YES];
+    });
+}
+%end
+
 %end
 
 
@@ -53,17 +63,7 @@
 %hookf(OSStatus, AudioUnitInitialize, AudioUnit inUnit){
 	OSStatus orig = %orig;
 
-	if([NSThread isMainThread]){
-		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
-		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-	}
-	else{
-		//dispatch_sync causes some apps to crash or stall and prevents rejailbreaking the device, so using dispatch_async instead (https://iphonemano.blogspot.com/2015/06/dispatchasync-vs-dispatchsync.html)
-		dispatch_async(dispatch_get_main_queue(), ^{ 
-			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
-			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-		});
-	}
+	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micActive"), nil, nil, true);
 
     return orig;
 }
@@ -72,17 +72,7 @@
 %hookf(OSStatus, AudioUnitUninitialize, AudioUnit inUnit){
 	OSStatus orig = %orig;
 
-	if([NSThread isMainThread]){
-		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
-		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-	}
-	else{
-		//dispatch_sync causes some apps to crash or stall and prevents rejailbreaking the device, so using dispatch_async instead (https://iphonemano.blogspot.com/2015/06/dispatchasync-vs-dispatchsync.html)
-		dispatch_async(dispatch_get_main_queue(), ^{ 
-			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
-			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-		});
-	}
+	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
 
     return orig;
 }
@@ -92,31 +82,13 @@
 -(void)startDictation{
 	%orig;
 
-	if([NSThread isMainThread]){
-		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
-		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-	}
-	else{
-		dispatch_sync(dispatch_get_main_queue(), ^{
-			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
-			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-		});
-	}
+	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micActive"), nil, nil, true);
 }
 
 -(void)stopDictation{
 	%orig;
 	
-	if([NSThread isMainThread]){
-		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
-		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];	
-	}
-	else{
-		dispatch_sync(dispatch_get_main_queue(), ^{
-			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
-			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];	
-		});
-	}
+	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
 }
 %end
 
@@ -125,33 +97,38 @@
 -(void)assistantConnectionSpeechRecordingWillBegin:(id)arg1 {
 	%orig;
 
-	if([NSThread isMainThread]){
-		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
-		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-	}
-	else{
-		dispatch_sync(dispatch_get_main_queue(), ^{
-			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = YES;
-			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-		});
-	}
+	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micActive"), nil, nil, true);
 }
 
--(void)assistantConnectionSpeechRecordingDidEnd:(id)arg1 {
+-(void)assistantConnectionSpeechRecordingDidEnd:(id)arg1 {  //normal end 
 	%orig;
 
-	if([NSThread isMainThread]){
-		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
-		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-	}
-	else{
-		dispatch_sync(dispatch_get_main_queue(), ^{
-			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).micIsActive = NO;
-			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-		});
-	}
+	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
+}
+
+-(void)endForReason:(long long)arg1{  //any other type of end 
+	%orig;
+
+	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
 }
 %end
+
+%hook FlynnsArcade
++(void)initialize{
+	%orig;
+
+    int notify_token2;
+
+    // change mic indicator for use
+    notify_register_dispatch("me.lightmann.quorra/micActive", &notify_token2, dispatch_get_main_queue(), ^(int token) {
+        [[[FlynnsArcade sharedInstance] container].orangeDot setHidden:NO];
+    });
+	notify_register_dispatch("me.lightmann.quorra/micInactive", &notify_token2, dispatch_get_main_queue(), ^(int token) {
+        [[[FlynnsArcade sharedInstance] container].orangeDot setHidden:YES];
+    });
+}
+%end
+
 %end
 
 
@@ -164,19 +141,33 @@
 -(void)setUpdatingLocation:(BOOL)arg1 {
 	%orig;
 
-	if([NSThread isMainThread]){
-		((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).gpsIsActive = arg1;
-		[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-	}
-	else{
-		//dispatch_sync stalls maps, so using dispatch_async instead (https://iphonemano.blogspot.com/2015/06/dispatchasync-vs-dispatchsync.html)
-		dispatch_async(dispatch_get_main_queue(), ^{ 
-			((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]).gpsIsActive = arg1;
-			[((FlynnsArcade*)[%c(FlynnsArcade) sharedInstance]) initiateGrid];
-		});
-	}
+	if(arg1)
+		CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/gpsActive"), nil, nil, true);
+	
+	else if (!arg1)
+		CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/gpsInactive"), nil, nil, true);
+	
+	else 
+		%orig;
 }
 %end
+
+%hook FlynnsArcade
++(void)initialize{
+	%orig;
+
+    int notify_token2;
+
+    // change location indicator for use
+    notify_register_dispatch("me.lightmann.quorra/gpsActive", &notify_token2, dispatch_get_main_queue(), ^(int token) {
+        [[[FlynnsArcade sharedInstance] container].blueDot setHidden:NO];
+    });
+	notify_register_dispatch("me.lightmann.quorra/gpsInactive", &notify_token2, dispatch_get_main_queue(), ^(int token) {
+        [[[FlynnsArcade sharedInstance] container].blueDot setHidden:YES];
+    });
+}
+%end
+
 %end
 
 
@@ -209,6 +200,8 @@ static void initPrefs() {
 	loadPrefs();
 
 	if(isEnabled){
+		%init(general)
+
 		if(gpsIndicator)
 			%init(gpsIndicator)
 		

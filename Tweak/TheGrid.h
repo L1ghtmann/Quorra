@@ -13,3 +13,8 @@ static int xPos;
 @property (nonatomic,retain) UIView * orangeDot; 
 @property (nonatomic,retain) UIView * greenDot; 
 @end
+
+// @interface SpringBoard : UIApplication
+// +(id) sharedApplication;
+// -(NSInteger) activeInterfaceOrientation;
+// @end
