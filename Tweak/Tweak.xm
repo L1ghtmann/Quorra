@@ -2,12 +2,12 @@
 #import "FlynnsArcade.h"
 #import <notify.h>
 
-//Lightmann
-//Made during COVID-19
-//Quorra
+// Lightmann
+// Made during COVID-19
+// Quorra
 
 %group general
-//Initialize my controller
+// Initialize my controller 
 %hook SpringBoard
 - (void)applicationDidFinishLaunching:(UIApplication *)application {
     %orig;
@@ -20,7 +20,7 @@
 %group camIndicator   
 /* Apple doesn't give direct access to the camera at a low-level and only core methods I could find were for buffer allocation (i.e. when data is being saved), which happens too late in the cycle for what we want (when pixel data becomes available) */
 
-// determine when camera is active by checking availability of the flashlight; if flash isn't available cam is active
+// Determine when camera is active by checking availability of the flashlight; if flash isn't available cam is active
 %hook SBUIFlashlightController 
 -(void)_updateStateWithAvailable:(BOOL)arg1 level:(unsigned long long)arg2 overheated:(BOOL)arg3 {
 	%orig;
@@ -36,6 +36,7 @@
 }
 %end
 
+// respond to posted notifications
 %hook FlynnsArcade
 +(void)initialize{
 	%orig;
@@ -51,24 +52,39 @@
     });
 }
 %end
-
 %end
 
 
 %group micIndicator 
-/* may eventually add check for phone calls too since that's the only other edge case not currently accounted for.
-   no indicator when recording video to match w iOS 14 where camera indicator takes precedent 					  */
+/* may eventually add checks for active calls and audio messages since they're the only remaining edge cases not currently accounted for
+   no indicator when recording video to match w iOS 14 where camera indicator takes precedent 											 */
 
-//determine when mic is active (pure audio recording)
+// post notification when audio unit is made
 %hookf(OSStatus, AudioUnitInitialize, AudioUnit inUnit){
 	OSStatus orig = %orig;
 
-	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micActive"), nil, nil, true);
+	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/audioUnitInit"), nil, nil, true);	
 
     return orig;
 }
 
-//determine when mic is inactive (pure audio recording)
+// Determine when mic is active (pure audio recording)
+%hookf(OSStatus, AudioUnitSetProperty, AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, const void *inData, UInt32 inDataSize){
+	OSStatus orig = %orig;
+
+    int notify_token2;
+
+    // check for activity
+    notify_register_dispatch("me.lightmann.quorra/audioUnitInit", &notify_token2, dispatch_get_main_queue(), ^(int token) {
+		//make sure that we only display the indicators for audio input units, not just any audiounit
+		if(inID == kAudioOutputUnitProperty_EnableIO)
+			CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micActive"), nil, nil, true);
+	});
+
+    return orig;
+}
+
+// Determine when mic is inactive (pure audio recording)
 %hookf(OSStatus, AudioUnitUninitialize, AudioUnit inUnit){
 	OSStatus orig = %orig;
 
@@ -77,7 +93,7 @@
     return orig;
 }
 
-//Determine when dictation is in use
+// Determine when dictation is in use
 %hook UIDictationController
 -(void)startDictation{
 	%orig;
@@ -92,7 +108,7 @@
 }
 %end
 
-//Determine when Siri is in use 
+// Determine when Siri is in use 
 %hook AFUISiriSession
 -(void)assistantConnectionSpeechRecordingWillBegin:(id)arg1 {
 	%orig;
@@ -113,6 +129,7 @@
 }
 %end
 
+// respond to posted notifications
 %hook FlynnsArcade
 +(void)initialize{
 	%orig;
@@ -128,7 +145,6 @@
     });
 }
 %end
-
 %end
 
 
@@ -136,7 +152,7 @@
 /* Quorra now checks for when the device's location is actively being updated, not if it has been or is stored, like previous builds did. 
    A CLLocation can be stored (i.e. updated once and then stored -- like w the weather) or it can be updated constantly (like w the compass) */
 
-//Determine when location is being pulled (i.e. gps in use) 
+// Determine when location is being pulled (i.e. gps in use) 
 %hook CLLocationManagerStateTracker
 -(void)setUpdatingLocation:(BOOL)arg1 {
 	%orig;
@@ -152,6 +168,16 @@
 }
 %end
 
+// Backup EOL method since some apps dont call !arg1 ^ (e.g. camera, app store, etc)
+%hook UIApplication
+-(void)_applicationDidEnterBackground{
+	%orig;
+	
+	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/gpsInactive"), nil, nil, true);
+}
+%end
+
+// respond to posted notifications
 %hook FlynnsArcade
 +(void)initialize{
 	%orig;
@@ -167,9 +193,7 @@
     });
 }
 %end
-
 %end
-
 
 
 //	PREFERENCES 

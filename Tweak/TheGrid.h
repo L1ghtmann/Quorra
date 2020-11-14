@@ -1,8 +1,5 @@
 #import <UIKit/UIKit.h>
 
-static int yPos;
-static int xPos;
-
 @interface UIWindow (Private)
 -(void)_setSecure:(BOOL)secure;
 -(BOOL)_canAffectStatusBarAppearance;
@@ -14,7 +11,11 @@ static int xPos;
 @property (nonatomic,retain) UIView * greenDot; 
 @end
 
-// @interface SpringBoard : UIApplication
-// +(id) sharedApplication;
-// -(NSInteger) activeInterfaceOrientation;
-// @end
+//prefs
+static int yPos;
+static int xPos;
+
+static int landYPos;
+static int landXPos;
+
+static BOOL noLandDots;

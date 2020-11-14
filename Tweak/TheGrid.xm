@@ -9,226 +9,163 @@
 - (TheGrid *)init {
 	self = [super init];
 
-	__block UIView *blueDot;
-	__block UIView *orangeDot;
-	__block UIView *greenDot;
-
 	if (self) {		
-		if([NSThread isMainThread]){
-			self.backgroundColor = nil;
-			self.windowLevel = 2020;
-			[self setHidden:NO];
-			self.userInteractionEnabled = NO;
+		self.backgroundColor = nil;
+		self.windowLevel = 2020;
+		[self setHidden:NO];
+		self.userInteractionEnabled = NO;
 
-
-			if(!yPos && !xPos){ //default (centered)
-				if(noNotch) {
-					blueDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2)-10,17,5,5)]; 
-				} else {
-					blueDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2)-10,34,5,5)]; 
-				}
-			}
-			if(yPos != 0 && !xPos){ //y change no x
-				blueDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2)-10,yPos,5,5)]; 
-			}
-			if(!yPos && xPos != 0){ //x change no y
-				if(noNotch) {
-					blueDot = [[UIView alloc] initWithFrame:CGRectMake(xPos-10,17,5,5)]; 
-				} else {
-					blueDot = [[UIView alloc] initWithFrame:CGRectMake(xPos-10,34,5,5)]; 
-				}
-			}
-			if(yPos != 0 && xPos != 0){ //both changed
-				blueDot = [[UIView alloc] initWithFrame:CGRectMake(xPos-10,yPos,5,5)]; 
-			}
-
-			blueDot.backgroundColor = [UIColor colorWithRed:44.0f/255.0f green:143.0f/255.0f blue:255.0f/255.0f alpha:1.0]; 
-			blueDot.userInteractionEnabled = NO;
-			blueDot.layer.cornerRadius = blueDot.frame.size.height/2;
-			[blueDot setHidden:YES];
-
-			[self addSubview:blueDot];
-			self.blueDot = blueDot;
-
-
-			if(!yPos && !xPos){ //default (centered)
-				if(noNotch) {
-					orangeDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2),17,5,5)]; 
-				} else {
-					orangeDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2),34,5,5)]; 
-				}
-			}
-			if(yPos != 0 && !xPos){ //y change no x
-				orangeDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2),yPos,5,5)];
-			}
-			if(!yPos && xPos != 0){ //x change no y
-				if(noNotch) {
-					orangeDot = [[UIView alloc] initWithFrame:CGRectMake(xPos,17,5,5)];
-				} else {
-					orangeDot = [[UIView alloc] initWithFrame:CGRectMake(xPos,34,5,5)];
-				}
-			}
-			if(yPos != 0 && xPos != 0){ //both changed
-				orangeDot = [[UIView alloc] initWithFrame:CGRectMake(xPos,yPos,5,5)];
-			}
+		self.blueDot = [[UIView alloc] initWithFrame:CGRectZero];
+		self.blueDot.backgroundColor = [UIColor colorWithRed:44.0f/255.0f green:143.0f/255.0f blue:255.0f/255.0f alpha:1.0]; 
+		self.blueDot.userInteractionEnabled = NO;
+		[self.blueDot setHidden:YES];
+		[self addSubview:self.blueDot];
 				
-			orangeDot.backgroundColor = [UIColor orangeColor];
-			orangeDot.userInteractionEnabled = NO;
-			orangeDot.layer.cornerRadius = orangeDot.frame.size.height/2;
-			[orangeDot setHidden:YES];
+		self.orangeDot = [[UIView alloc] initWithFrame:CGRectZero];
+		self.orangeDot.backgroundColor = [UIColor orangeColor];
+		self.orangeDot.userInteractionEnabled = NO;
+		[self.orangeDot setHidden:YES];
+		[self addSubview:self.orangeDot];
 
-			[self addSubview:orangeDot];
-			self.orangeDot = orangeDot;
+		self.greenDot = [[UIView alloc] initWithFrame:CGRectZero];
+		self.greenDot.backgroundColor = [UIColor greenColor];
+		self.greenDot.userInteractionEnabled = NO;
+		[self.greenDot setHidden:YES];
+		[self addSubview:self.greenDot];
 
-					
-			if(!yPos && !xPos){ //default (centered)
-				if(noNotch) {
-					greenDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2)+10,17,5,5)]; 
-				} else {
-					greenDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2)+10,34,5,5)]; 
-				}
-			}
-			if(yPos != 0 && !xPos){ //y change no x
-				greenDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2)+10,yPos,5,5)];
-			}
-			if(!yPos && xPos != 0){ //x change no y
-				if(noNotch) {
-					greenDot = [[UIView alloc] initWithFrame:CGRectMake(xPos+10,17,5,5)];
-				} else {
-					greenDot = [[UIView alloc] initWithFrame:CGRectMake(xPos+10,34,5,5)];
-				}
-			}
-			if(yPos != 0 && xPos != 0){ //both changed
-				greenDot = [[UIView alloc] initWithFrame:CGRectMake(xPos+10,yPos,5,5)];
-			}				
+		[self layoutIndicators];
 
-			greenDot.backgroundColor = [UIColor greenColor];
-			greenDot.userInteractionEnabled = NO;
-			greenDot.layer.cornerRadius = greenDot.frame.size.height/2;
-			[greenDot setHidden:YES];
-
-			[self addSubview:greenDot];
-			self.greenDot = greenDot;
-
-			//In some apps the appWindow scene is not automaticaally passed to TheGrid, so we have to manually do it so TheGrid can take hold in the application
-			if(!self.windowScene && [[UIApplication sharedApplication] windows].count){
-				UIWindow *appWindow = [[[UIApplication sharedApplication] windows] objectAtIndex:0]; 
-				self.windowScene = appWindow.windowScene;
-			}
-
-			//Prevents camera from flickering when device is locked (http://iphonedevwiki.net/index.php/Updating_extensions_for_iOS_8)
-			if ([self respondsToSelector:@selector(_setSecure:)]){ [self _setSecure:YES]; }
+		//In some apps the appWindow scene is not automaticaally passed to TheGrid, so we have to manually do it so TheGrid can take hold in the application
+		if(!self.windowScene && [[UIApplication sharedApplication] windows].count){
+			UIWindow *appWindow = [[[UIApplication sharedApplication] windows] objectAtIndex:0]; 
+			self.windowScene = appWindow.windowScene;
 		}
-		else{
-			dispatch_sync(dispatch_get_main_queue(), ^{
-				self.backgroundColor = nil;
-				self.windowLevel = 2020;
-				[self setHidden:NO];
-				self.userInteractionEnabled = NO;
 
+		//Prevents camera from flickering when device is locked (http://iphonedevwiki.net/index.php/Updating_extensions_for_iOS_8)
+		if ([self respondsToSelector:@selector(_setSecure:)]){ [self _setSecure:YES]; }
 
-				if(!yPos && !xPos){ //default (centered)
-					if(noNotch) {
-						blueDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2)-10,17,5,5)]; 
-					} else {
-						blueDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2)-10,34,5,5)]; 
-					}
-				}
-				if(yPos != 0 && !xPos){ //y change no x
-					blueDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2)-10,yPos,5,5)]; 
-				}
-				if(!yPos && xPos != 0){ //x change no y
-					if(noNotch) {
-						blueDot = [[UIView alloc] initWithFrame:CGRectMake(xPos-10,17,5,5)]; 
-					} else {
-						blueDot = [[UIView alloc] initWithFrame:CGRectMake(xPos-10,34,5,5)]; 
-					}
-				}
-				if(yPos != 0 && xPos != 0){ //both changed
-					blueDot = [[UIView alloc] initWithFrame:CGRectMake(xPos-10,yPos,5,5)]; 
-				}
-
-				blueDot.backgroundColor = [UIColor colorWithRed:44.0f/255.0f green:143.0f/255.0f blue:255.0f/255.0f alpha:1.0]; 
-				blueDot.userInteractionEnabled = NO;
-				blueDot.layer.cornerRadius = blueDot.frame.size.height/2;
-				[blueDot setHidden:YES];
-
-				[self addSubview:blueDot];
-				self.blueDot = blueDot;
-
-
-				if(!yPos && !xPos){ //default (centered)
-					if(noNotch) {
-						orangeDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2),17,5,5)]; 
-					} else {
-						orangeDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2),34,5,5)]; 
-					}
-				}
-				if(yPos != 0 && !xPos){ //y change no x
-					orangeDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2),yPos,5,5)];
-				}
-				if(!yPos && xPos != 0){ //x change no y
-					if(noNotch) {
-						orangeDot = [[UIView alloc] initWithFrame:CGRectMake(xPos,17,5,5)];
-					} else {
-						orangeDot = [[UIView alloc] initWithFrame:CGRectMake(xPos,34,5,5)];
-					}
-				}
-				if(yPos != 0 && xPos != 0){ //both changed
-					orangeDot = [[UIView alloc] initWithFrame:CGRectMake(xPos,yPos,5,5)];
-				}
-				
-				orangeDot.backgroundColor = [UIColor orangeColor];
-				orangeDot.userInteractionEnabled = NO;
-				orangeDot.layer.cornerRadius = orangeDot.frame.size.height/2;
-				[orangeDot setHidden:YES];
-
-				[self addSubview:orangeDot];
-				self.orangeDot = orangeDot;
-
-					
-				if(!yPos && !xPos){ //default (centered)
-					if(noNotch) {
-						greenDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2)+10,17,5,5)]; 
-					} else {
-						greenDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2)+10,34,5,5)]; 
-					}
-				}
-				if(yPos != 0 && !xPos){ //y change no x
-					greenDot = [[UIView alloc] initWithFrame:CGRectMake((kWidth/2)+10,yPos,5,5)];
-				}
-				if(!yPos && xPos != 0){ //x change no y
-					if(noNotch) {
-						greenDot = [[UIView alloc] initWithFrame:CGRectMake(xPos+10,17,5,5)];
-					} else {
-						greenDot = [[UIView alloc] initWithFrame:CGRectMake(xPos+10,34,5,5)];
-					}
-				}
-				if(yPos != 0 && xPos != 0){ //both changed
-					greenDot = [[UIView alloc] initWithFrame:CGRectMake(xPos+10,yPos,5,5)];
-				}				
-
-				greenDot.backgroundColor = [UIColor greenColor];
-				greenDot.userInteractionEnabled = NO;
-				greenDot.layer.cornerRadius = greenDot.frame.size.height/2;
-				[greenDot setHidden:YES];
-
-				[self addSubview:greenDot];
-				self.greenDot = greenDot;
-
-				//In some apps the appWindow scene is not automaticaally passed to TheGrid, so we have to manually do it so TheGrid can take hold in the application
-				if(!self.windowScene && [[UIApplication sharedApplication] windows].count){
-					UIWindow *appWindow = [[[UIApplication sharedApplication] windows] objectAtIndex:0]; 
-					self.windowScene = appWindow.windowScene;
-				}
-
-				//Prevents camera from flickering when device is locked (http://iphonedevwiki.net/index.php/Updating_extensions_for_iOS_8)
-				if ([self respondsToSelector:@selector(_setSecure:)]){ [self _setSecure:YES]; }
-			});
-		}
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(rotated:) name:UIDeviceOrientationDidChangeNotification object:nil];
 	}
 	
 	return self;
+}
+
+//set default position and corner radius
+-(void)layoutIndicators{
+	if(!yPos && !xPos){ //default (centered)
+		if(noNotch) {
+			[self.blueDot setFrame:CGRectMake((kWidth/2)-10,17,5,5)]; 
+			[self.orangeDot setFrame:CGRectMake((kWidth/2),17,5,5)]; 
+			[self.greenDot setFrame:CGRectMake((kWidth/2)+10,17,5,5)]; 
+		} else {
+			[self.blueDot setFrame:CGRectMake((kWidth/2)-10,34,5,5)]; 
+			[self.orangeDot setFrame:CGRectMake((kWidth/2),34,5,5)]; 
+			[self.greenDot setFrame:CGRectMake((kWidth/2)+10,34,5,5)]; 
+		}
+	}
+	if(yPos != 0 && !xPos){ //y change no x
+		[self.blueDot setFrame:CGRectMake((kWidth/2)-10,yPos,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake((kWidth/2),yPos,5,5)];
+		[self.greenDot setFrame:CGRectMake((kWidth/2)+10,yPos,5,5)];
+	}
+	if(!yPos && xPos != 0){ //x change no y
+		if(noNotch) {
+			[self.blueDot setFrame:CGRectMake(xPos-10,17,5,5)]; 
+			[self.orangeDot setFrame:CGRectMake(xPos,17,5,5)];
+			[self.greenDot setFrame:CGRectMake(xPos+10,17,5,5)];
+		} else {
+			[self.blueDot setFrame:CGRectMake(xPos-10,34,5,5)]; 
+			[self.orangeDot setFrame:CGRectMake(xPos,34,5,5)];
+			[self.greenDot setFrame:CGRectMake(xPos+10,34,5,5)];
+		}
+	}
+	if(yPos != 0 && xPos != 0){ //both changed
+		[self.blueDot setFrame:CGRectMake(xPos-10,yPos,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(xPos,yPos,5,5)];
+		[self.greenDot setFrame:CGRectMake(xPos+10,yPos,5,5)];
+	}	
+
+	self.blueDot.layer.cornerRadius = self.greenDot.frame.size.height/2;
+	self.orangeDot.layer.cornerRadius = self.greenDot.frame.size.height/2;
+	self.greenDot.layer.cornerRadius = self.greenDot.frame.size.height/2;
+}
+
+//if device rotates, change locations accordingly
+- (void)rotated:(NSNotification *)notification {
+	UIDevice * device = notification.object;
+
+	switch(device.orientation){
+		case UIDeviceOrientationPortrait: 
+			if(noLandDots)
+				[self setHidden:NO];
+			[self layoutIndicators];
+		break;
+
+		case UIDeviceOrientationLandscapeLeft:
+			if(noLandDots)
+				[self setHidden:YES];
+			else
+				[self landscapeLeftLayout];
+		break;
+
+		case UIDeviceOrientationLandscapeRight:
+			if(noLandDots)
+				[self setHidden:YES];
+			else
+				[self landscapeRightLayout];
+		break;
+
+		default:
+		break;
+	};
+}
+
+//positioning for left landscape 
+-(void)landscapeLeftLayout{
+	if(!landYPos && !landXPos){ //default (centered)
+		[self.blueDot setFrame:CGRectMake(kWidth-10,(kHeight/2)-10,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(kWidth-10,(kHeight/2),5,5)]; 
+		[self.greenDot setFrame:CGRectMake(kWidth-10,(kHeight/2)+10,5,5)]; 
+	}
+	if(landYPos != 0 && !landXPos){ //y change no x
+		[self.blueDot setFrame:CGRectMake(kWidth-landYPos,(kHeight/2)-10,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(kWidth-landYPos,(kHeight/2),5,5)]; 
+		[self.greenDot setFrame:CGRectMake(kWidth-landYPos,(kHeight/2)+10,5,5)]; 
+	}
+	if(!landYPos && landXPos != 0){ //x change no y
+		[self.blueDot setFrame:CGRectMake(kWidth-10,landXPos+10,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(kWidth-10,landXPos+20,5,5)]; 
+		[self.greenDot setFrame:CGRectMake(kWidth-10,landXPos+30,5,5)]; 
+	}
+	if(landYPos != 0 && landXPos != 0){ //both changed
+		[self.blueDot setFrame:CGRectMake(kWidth-landYPos,landXPos+10,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(kWidth-landYPos,landXPos+20,5,5)];
+		[self.greenDot setFrame:CGRectMake(kWidth-landYPos,landXPos+30,5,5)];
+	}	
+}
+
+//positioning for right landscape 
+-(void)landscapeRightLayout{
+	if(!landYPos && !landXPos){ //default (centered)
+		[self.blueDot setFrame:CGRectMake(10,(kHeight/2)-10,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(10,(kHeight/2),5,5)]; 
+		[self.greenDot setFrame:CGRectMake(10,(kHeight/2)+10,5,5)]; 
+	}
+	if(landYPos != 0 && !landXPos){ //y change no x
+		[self.blueDot setFrame:CGRectMake(landYPos,(kHeight/2)-10,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(landYPos,(kHeight/2)-10,5,5)];
+		[self.greenDot setFrame:CGRectMake(landYPos,(kHeight/2)+10,5,5)];
+	}
+	if(!landYPos && landXPos != 0){ //x change no y
+		[self.blueDot setFrame:CGRectMake(10,(kHeight-landXPos-10),5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(10,(kHeight-landXPos-20),5,5)];
+		[self.greenDot setFrame:CGRectMake(10,(kHeight-landXPos-30),5,5)];
+	}
+	if(landYPos != 0 && landXPos != 0){ //both changed
+		[self.blueDot setFrame:CGRectMake(landYPos,(kHeight-landXPos-10),5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(landYPos,(kHeight-landXPos-20),5,5)];
+		[self.greenDot setFrame:CGRectMake(landYPos,(kHeight-landXPos-30),5,5)];
+	}	
 }
 
 //prevents my UIWindow from taking control of the status bar 
@@ -247,6 +184,9 @@ static void loadPrefs() {
   if(prefs){
 	yPos = ( [prefs valueForKey:@"yPos"] ? [[prefs valueForKey:@"yPos"] integerValue] : 0 );
 	xPos = ( [prefs valueForKey:@"xPos"] ? [[prefs valueForKey:@"xPos"] integerValue] : 0 );
+	landYPos = ( [prefs valueForKey:@"landYPos"] ? [[prefs valueForKey:@"landYPos"] integerValue] : 0 );
+	landXPos = ( [prefs valueForKey:@"landXPos"] ? [[prefs valueForKey:@"landXPos"] integerValue] : 0 );
+	noLandDots = ( [prefs objectForKey:@"noLandDots"] ? [[prefs objectForKey:@"noLandDots"] boolValue] : NO );
   }
 }
 
