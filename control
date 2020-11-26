@@ -1,6 +1,6 @@
 Package: me.lightmann.quorra
 Name: Quorra
-Version: 1.0.6
+Version: 1.0.6.1
 Depends: mobilesubstrate, preferenceloader, firmware (>= 13.0)
 Architecture: iphoneos-arm
 Description: iOS 14's indicator dots for iOS 13

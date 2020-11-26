@@ -11,6 +11,7 @@
 %hook SpringBoard
 - (void)applicationDidFinishLaunching:(UIApplication *)application {
     %orig;
+	
 	[FlynnsArcade sharedInstance];
 }
 %end
@@ -76,8 +77,9 @@
 
     // check for activity
     notify_register_dispatch("me.lightmann.quorra/audioUnitInit", &notify_token2, dispatch_get_main_queue(), ^(int token) {
-		//make sure that we only display the indicators for audio input units, not just any audiounit
-		if(inID == kAudioOutputUnitProperty_EnableIO)
+		//make sure that we only display the indicator for input units, not just any audiounit 
+		AudioUnitElement inputBus = 1;
+		if(inID == kAudioOutputUnitProperty_EnableIO && inScope == kAudioUnitScope_Input && inElement == inputBus)	
 			CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micActive"), nil, nil, true);
 	});
 
@@ -93,6 +95,15 @@
     return orig;
 }
 
+//may not need this method? just a backup for now, I guess  
+%hookf(OSStatus, AudioComponentInstanceDispose, AudioComponentInstance inInstance){
+	OSStatus orig = %orig;
+
+	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
+
+    return orig;
+}
+
 // Determine when dictation is in use
 %hook UIDictationController
 -(void)startDictation{
@@ -101,10 +112,16 @@
 	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micActive"), nil, nil, true);
 }
 
--(void)stopDictation{
+-(void)stopDictation{ //normal end
 	%orig;
 	
 	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
+}
+
+-(void)cancelDictation{ //any other type of end 
+	%orig;
+	
+	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);	
 }
 %end
 
@@ -125,6 +142,15 @@
 -(void)endForReason:(long long)arg1{  //any other type of end 
 	%orig;
 
+	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
+}
+%end
+
+// Backup EOL method since the indicator bugs out in some apps -- Can't replicate myself -- NEED TO FIND BETTER METHOD SO THIS ISNT REQUIRED!!! 
+%hook UIApplication
+-(void)_applicationDidEnterBackground{
+	%orig;
+	
 	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
 }
 %end
@@ -168,7 +194,7 @@
 }
 %end
 
-// Backup EOL method since some apps dont call !arg1 ^ (e.g. camera, app store, etc)
+// Backup EOL method since some apps dont call !arg1 ^ (e.g. camera, app store, etc) -- NEED TO FIND BETTER METHOD SO THIS ISNT REQUIRED!!! 
 %hook UIApplication
 -(void)_applicationDidEnterBackground{
 	%orig;
