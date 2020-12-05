@@ -63,12 +63,12 @@
 			[self.greenDot setFrame:CGRectMake((kWidth/2)+10,34,5,5)]; 
 		}
 	}
-	if(yPos != 0 && !xPos){ //y change no x
+	else if(yPos != 0 && !xPos){ //y change no x
 		[self.blueDot setFrame:CGRectMake((kWidth/2)-10,yPos,5,5)]; 
 		[self.orangeDot setFrame:CGRectMake((kWidth/2),yPos,5,5)];
 		[self.greenDot setFrame:CGRectMake((kWidth/2)+10,yPos,5,5)];
 	}
-	if(!yPos && xPos != 0){ //x change no y
+	else if(!yPos && xPos != 0){ //x change no y
 		if(noNotch) {
 			[self.blueDot setFrame:CGRectMake(xPos-10,17,5,5)]; 
 			[self.orangeDot setFrame:CGRectMake(xPos,17,5,5)];
@@ -79,7 +79,7 @@
 			[self.greenDot setFrame:CGRectMake(xPos+10,34,5,5)];
 		}
 	}
-	if(yPos != 0 && xPos != 0){ //both changed
+	else{ //both changed
 		[self.blueDot setFrame:CGRectMake(xPos-10,yPos,5,5)]; 
 		[self.orangeDot setFrame:CGRectMake(xPos,yPos,5,5)];
 		[self.greenDot setFrame:CGRectMake(xPos+10,yPos,5,5)];
@@ -88,6 +88,54 @@
 	self.blueDot.layer.cornerRadius = self.greenDot.frame.size.height/2;
 	self.orangeDot.layer.cornerRadius = self.greenDot.frame.size.height/2;
 	self.greenDot.layer.cornerRadius = self.greenDot.frame.size.height/2;
+}
+
+//positioning for left landscape 
+-(void)landscapeLeftLayout{
+	if(!landYPos && !landXPos){ //default (centered)
+		[self.blueDot setFrame:CGRectMake(kWidth-10,(kHeight/2)-10,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(kWidth-10,(kHeight/2),5,5)]; 
+		[self.greenDot setFrame:CGRectMake(kWidth-10,(kHeight/2)+10,5,5)]; 
+	}
+	else if(landYPos != 0 && !landXPos){ //y change no x
+		[self.blueDot setFrame:CGRectMake(kWidth-landYPos,(kHeight/2)-10,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(kWidth-landYPos,(kHeight/2),5,5)]; 
+		[self.greenDot setFrame:CGRectMake(kWidth-landYPos,(kHeight/2)+10,5,5)]; 
+	}
+	else if(!landYPos && landXPos != 0){ //x change no y
+		[self.blueDot setFrame:CGRectMake(kWidth-10,landXPos+10,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(kWidth-10,landXPos+20,5,5)]; 
+		[self.greenDot setFrame:CGRectMake(kWidth-10,landXPos+30,5,5)]; 
+	}
+	else{ //both changed
+		[self.blueDot setFrame:CGRectMake(kWidth-landYPos,landXPos+10,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(kWidth-landYPos,landXPos+20,5,5)];
+		[self.greenDot setFrame:CGRectMake(kWidth-landYPos,landXPos+30,5,5)];
+	}	
+}
+
+//positioning for right landscape 
+-(void)landscapeRightLayout{
+	if(!landYPos && !landXPos){ //default (centered)
+		[self.blueDot setFrame:CGRectMake(10,(kHeight/2)-10,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(10,(kHeight/2),5,5)]; 
+		[self.greenDot setFrame:CGRectMake(10,(kHeight/2)+10,5,5)]; 
+	}
+	else if(landYPos != 0 && !landXPos){ //y change no x
+		[self.blueDot setFrame:CGRectMake(landYPos,(kHeight/2)-10,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(landYPos,(kHeight/2)-10,5,5)];
+		[self.greenDot setFrame:CGRectMake(landYPos,(kHeight/2)+10,5,5)];
+	}
+	else if(!landYPos && landXPos != 0){ //x change no y
+		[self.blueDot setFrame:CGRectMake(10,(kHeight-landXPos-10),5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(10,(kHeight-landXPos-20),5,5)];
+		[self.greenDot setFrame:CGRectMake(10,(kHeight-landXPos-30),5,5)];
+	}
+	else{ //both changed
+		[self.blueDot setFrame:CGRectMake(landYPos,(kHeight-landXPos-10),5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(landYPos,(kHeight-landXPos-20),5,5)];
+		[self.greenDot setFrame:CGRectMake(landYPos,(kHeight-landXPos-30),5,5)];
+	}	
 }
 
 //if device rotates, change locations accordingly
@@ -120,54 +168,6 @@
 	};
 }
 
-//positioning for left landscape 
--(void)landscapeLeftLayout{
-	if(!landYPos && !landXPos){ //default (centered)
-		[self.blueDot setFrame:CGRectMake(kWidth-10,(kHeight/2)-10,5,5)]; 
-		[self.orangeDot setFrame:CGRectMake(kWidth-10,(kHeight/2),5,5)]; 
-		[self.greenDot setFrame:CGRectMake(kWidth-10,(kHeight/2)+10,5,5)]; 
-	}
-	if(landYPos != 0 && !landXPos){ //y change no x
-		[self.blueDot setFrame:CGRectMake(kWidth-landYPos,(kHeight/2)-10,5,5)]; 
-		[self.orangeDot setFrame:CGRectMake(kWidth-landYPos,(kHeight/2),5,5)]; 
-		[self.greenDot setFrame:CGRectMake(kWidth-landYPos,(kHeight/2)+10,5,5)]; 
-	}
-	if(!landYPos && landXPos != 0){ //x change no y
-		[self.blueDot setFrame:CGRectMake(kWidth-10,landXPos+10,5,5)]; 
-		[self.orangeDot setFrame:CGRectMake(kWidth-10,landXPos+20,5,5)]; 
-		[self.greenDot setFrame:CGRectMake(kWidth-10,landXPos+30,5,5)]; 
-	}
-	if(landYPos != 0 && landXPos != 0){ //both changed
-		[self.blueDot setFrame:CGRectMake(kWidth-landYPos,landXPos+10,5,5)]; 
-		[self.orangeDot setFrame:CGRectMake(kWidth-landYPos,landXPos+20,5,5)];
-		[self.greenDot setFrame:CGRectMake(kWidth-landYPos,landXPos+30,5,5)];
-	}	
-}
-
-//positioning for right landscape 
--(void)landscapeRightLayout{
-	if(!landYPos && !landXPos){ //default (centered)
-		[self.blueDot setFrame:CGRectMake(10,(kHeight/2)-10,5,5)]; 
-		[self.orangeDot setFrame:CGRectMake(10,(kHeight/2),5,5)]; 
-		[self.greenDot setFrame:CGRectMake(10,(kHeight/2)+10,5,5)]; 
-	}
-	if(landYPos != 0 && !landXPos){ //y change no x
-		[self.blueDot setFrame:CGRectMake(landYPos,(kHeight/2)-10,5,5)]; 
-		[self.orangeDot setFrame:CGRectMake(landYPos,(kHeight/2)-10,5,5)];
-		[self.greenDot setFrame:CGRectMake(landYPos,(kHeight/2)+10,5,5)];
-	}
-	if(!landYPos && landXPos != 0){ //x change no y
-		[self.blueDot setFrame:CGRectMake(10,(kHeight-landXPos-10),5,5)]; 
-		[self.orangeDot setFrame:CGRectMake(10,(kHeight-landXPos-20),5,5)];
-		[self.greenDot setFrame:CGRectMake(10,(kHeight-landXPos-30),5,5)];
-	}
-	if(landYPos != 0 && landXPos != 0){ //both changed
-		[self.blueDot setFrame:CGRectMake(landYPos,(kHeight-landXPos-10),5,5)]; 
-		[self.orangeDot setFrame:CGRectMake(landYPos,(kHeight-landXPos-20),5,5)];
-		[self.greenDot setFrame:CGRectMake(landYPos,(kHeight-landXPos-30),5,5)];
-	}	
-}
-
 //prevents my UIWindow from taking control of the status bar 
 -(BOOL)_canAffectStatusBarAppearance{
 	return NO;
@@ -176,32 +176,20 @@
 @end
 
 
-
 //	PREFERENCES 
-static void loadPrefs() {
-  NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/me.lightmann.quorraprefs.plist"];
-
-  if(prefs){
-	yPos = ( [prefs valueForKey:@"yPos"] ? [[prefs valueForKey:@"yPos"] integerValue] : 0 );
-	xPos = ( [prefs valueForKey:@"xPos"] ? [[prefs valueForKey:@"xPos"] integerValue] : 0 );
-	landYPos = ( [prefs valueForKey:@"landYPos"] ? [[prefs valueForKey:@"landYPos"] integerValue] : 0 );
-	landXPos = ( [prefs valueForKey:@"landXPos"] ? [[prefs valueForKey:@"landXPos"] integerValue] : 0 );
-	noLandDots = ( [prefs objectForKey:@"noLandDots"] ? [[prefs objectForKey:@"noLandDots"] boolValue] : NO );
-  }
-}
-
-static void initPrefs() {
-  // Copy the default preferences file when the actual preference file doesn't exist
-  NSString *path = @"/User/Library/Preferences/me.lightmann.quorraprefs.plist";
-  NSString *pathDefault = @"/Library/PreferenceBundles/QuorraPrefs.bundle/defaults.plist";
-  NSFileManager *fileManager = [NSFileManager defaultManager];
-  if(![fileManager fileExistsAtPath:path]) {
-    [fileManager copyItemAtPath:pathDefault toPath:path error:nil];
-  }
+void otherPreferencesChanged(){
+	NSDictionary *prefs = [[NSUserDefaults standardUserDefaults] persistentDomainForName:@"me.lightmann.quorraprefs"];
+	if(prefs){
+		yPos = ( [prefs objectForKey:@"yPos"] ? [[prefs valueForKey:@"yPos"] integerValue] : 0 );
+		xPos = ( [prefs objectForKey:@"xPos"] ? [[prefs valueForKey:@"xPos"] integerValue] : 0 );
+		landYPos = ( [prefs objectForKey:@"landYPos"] ? [[prefs valueForKey:@"landYPos"] integerValue] : 0 );
+		landXPos = ( [prefs objectForKey:@"landXPos"] ? [[prefs valueForKey:@"landXPos"] integerValue] : 0 );
+		noLandDots = ( [prefs objectForKey:@"noLandDots"] ? [[prefs valueForKey:@"noLandDots"] boolValue] : NO );
+	}
 }
 
 %ctor {
-	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)loadPrefs, CFSTR("me.lightmann.quorraprefs-updated"), NULL, CFNotificationSuspensionBehaviorCoalesce);
-	initPrefs();
-	loadPrefs();
+	otherPreferencesChanged();
+
+	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)otherPreferencesChanged, CFSTR("me.lightmann.quorraprefs-updated"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 }
