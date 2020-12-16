@@ -1,6 +1,7 @@
+#import <UIKit/UIKit.h>
 #import "TheGrid.h"
 
-@interface FlynnsArcade : UIViewController
-+ (FlynnsArcade*)sharedInstance;
-- (TheGrid*)container;
+@interface FlynnsArcade : NSObject
++(FlynnsArcade*)sharedInstance;
+-(TheGrid*)grid;
 @end

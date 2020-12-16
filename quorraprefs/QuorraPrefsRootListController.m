@@ -13,8 +13,13 @@
 
 //tints color of Switches
 - (void)viewWillAppear:(BOOL)animated {
-	[[UISwitch appearanceWhenContainedInInstancesOfClasses:@[self.class]] setOnTintColor:[UIColor colorWithRed:247.0f/255.0f green:249.0f/255.0f blue:250.0f/255.0f alpha:1.0]];
-    [super viewWillAppear:animated];
+	if(self.view.traitCollection.userInterfaceStyle == 1){ //light mode enabled
+		[[UISwitch appearanceWhenContainedInInstancesOfClasses:@[self.class]] setOnTintColor:[UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f]];
+	}
+	else{
+		[[UISwitch appearanceWhenContainedInInstancesOfClasses:@[self.class]] setOnTintColor:[UIColor colorWithRed:247.0f/255.0f green:249.0f/255.0f blue:250.0f/255.0f alpha:1.0]];
+	}
+	[super viewWillAppear:animated];
 }
 
 //close out of textfield when return key is pressed

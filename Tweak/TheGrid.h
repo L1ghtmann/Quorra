@@ -9,13 +9,19 @@
 @property (nonatomic,retain) UIView * blueDot; 
 @property (nonatomic,retain) UIView * orangeDot; 
 @property (nonatomic,retain) UIView * greenDot; 
+-(void)layoutIndicators;
+-(void)landscapeLeftLayout;
+-(void)landscapeRightLayout;
+-(void)gridPowerOn;
+-(void)gridPowerOff;
+-(void)rotated:(NSNotification *)notification;
 @end
 
 //prefs
+static BOOL noLandDots;
+
 static int yPos;
 static int xPos;
 
 static int landYPos;
 static int landXPos;
-
-static BOOL noLandDots;

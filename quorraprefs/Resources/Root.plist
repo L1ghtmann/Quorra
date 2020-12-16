@@ -40,9 +40,9 @@
 			<key>defaults</key>
 			<string>me.lightmann.quorraprefs</string>
 			<key>label</key>
-            <string>Show GPS Indicator</string>
+            <string>Show Camera Indicator</string>
             <key>key</key>
-            <string>gpsIndicator</string>
+            <string>camIndicator</string>
             <key>PostNotification</key>
 			<string>me.lightmann.quorraprefs-updated</string>
 			<key>alternateColors</key>
@@ -72,9 +72,9 @@
 			<key>defaults</key>
 			<string>me.lightmann.quorraprefs</string>
 			<key>label</key>
-            <string>Show Camera Indicator</string>
+            <string>Show GPS Indicator</string>
             <key>key</key>
-            <string>camIndicator</string>
+            <string>gpsIndicator</string>
             <key>PostNotification</key>
 			<string>me.lightmann.quorraprefs-updated</string>
 			<key>alternateColors</key>

@@ -1,2 +1,2 @@
 # Quorra
-iOS 14's indicator dots for iOS 13
+iOS 14's indicator dots for iOS 12 & 13
