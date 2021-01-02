@@ -1,4 +1,3 @@
-#import <UIKit/UIKit.h>
 #import "TheGrid.h"
 
 @interface FlynnsArcade : NSObject

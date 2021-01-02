@@ -6,7 +6,7 @@
 @interface SBUIFlashlightController : UIViewController
 @end
 
-//Phone Calls (mic)
+//Phone Calls 
 @interface SBTelephonyManager : NSObject 
 @end
 
@@ -14,12 +14,12 @@
 @property (nonatomic,readonly) int status; 
 @end
 
-//Dictation (mic)
+//Dictation 
 @interface UIDictationController : NSObject
 @end
 
-//Siri (mic)
-@interface AFUISiriSession : NSObject
+//Siri 
+@interface AFSiriClientStateManager : NSObject
 @end
 
 //prefs

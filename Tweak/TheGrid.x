@@ -16,25 +16,25 @@
 		[self setAlpha:0];
 		[self setBackgroundColor:[UIColor clearColor]];
 		[self setUserInteractionEnabled:NO];
-		[self _setSecure: YES]; //Prevents window to exist when device is locked (http://iphonedevwiki.net/index.php/Updating_extensions_for_iOS_8)
+		[self _setSecure: YES]; //Allows UIWindow to exist when device is locked (http://iphonedevwiki.net/index.php/Updating_extensions_for_iOS_8)
 
 		if(!self.greenDot){
 			self.greenDot = [[UIView alloc] initWithFrame:CGRectZero];
-			self.greenDot.backgroundColor = [UIColor greenColor];
+			[self.greenDot setBackgroundColor:[UIColor greenColor]];
 			[self.greenDot setAlpha:0];
 			[self addSubview:self.greenDot];
 		}
 
 		if(!self.orangeDot){			
 			self.orangeDot = [[UIView alloc] initWithFrame:CGRectZero];
-			self.orangeDot.backgroundColor = [UIColor orangeColor];
+			[self.orangeDot setBackgroundColor:[UIColor orangeColor]];
 			[self.orangeDot setAlpha:0];
 			[self addSubview:self.orangeDot];
 		}
 
 		if(!self.blueDot){
 			self.blueDot = [[UIView alloc] initWithFrame:CGRectZero];
-			self.blueDot.backgroundColor = [UIColor colorWithRed:44.0f/255.0f green:143.0f/255.0f blue:255.0f/255.0f alpha:1.0]; 
+			[self.blueDot setBackgroundColor:[UIColor colorWithRed:44.0f/255.0f green:143.0f/255.0f blue:255.0f/255.0f alpha:1.0]]; 
 			[self.blueDot setAlpha:0];
 			[self addSubview:self.blueDot];
 		}
@@ -78,14 +78,14 @@
 
 		[self layoutIndicators];
 
-		//Add self as observe for orientation change notifications. Responded to below
+		//Add self as observer for orientation change notifications. Responded to below
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(rotated:) name:UIDeviceOrientationDidChangeNotification object:nil];
 
     	if(kCFCoreFoundationVersionNumber >= 1600) {			
-			// In some apps the appWindow scene is not automatically passed to TheGrid, so we have to manually grab it in order to take hold in said app(s)
+			// In some apps the appWindow scene is not automatically passed to TheGrid, so we have to manually grab it in order to take hold in said apps
 			if(!self.windowScene && [[UIApplication sharedApplication] windows].count){
 				UIWindow *appWindow = [[[UIApplication sharedApplication] windows] objectAtIndex:0]; 
-				self.windowScene = appWindow.windowScene;
+				[self setWindowScene:appWindow.windowScene];
 			}
 		}
 	}
@@ -128,9 +128,9 @@
 		[self.blueDot setFrame:CGRectMake(xPos-10,yPos,5,5)]; 
 	}	
 
-	self.greenDot.layer.cornerRadius = self.greenDot.frame.size.height/2;
-	self.orangeDot.layer.cornerRadius = self.greenDot.frame.size.height/2;
-	self.blueDot.layer.cornerRadius = self.greenDot.frame.size.height/2;
+	[self.greenDot.layer setCornerRadius:self.greenDot.frame.size.height/2];
+	[self.orangeDot.layer setCornerRadius:self.greenDot.frame.size.height/2];
+	[self.blueDot.layer setCornerRadius:self.greenDot.frame.size.height/2];
 }
 
 //positioning for left landscape 

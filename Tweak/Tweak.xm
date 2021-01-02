@@ -5,7 +5,7 @@
 // Made during COVID-19
 // Quorra
 
-%group general
+%group General
 // Initalize FlynnsArcade and TheGrid
 %hook SpringBoard
 -(void)applicationDidFinishLaunching:(id)application{
@@ -17,11 +17,11 @@
 %end
 
 
-%group camIndicator   
-/* Apple doesn't give direct access to the camera at a low-level and only core frameworks only go as low as buffer allocation (i.e. when data is being saved), 
-							which happens too late in the cycle for what we want (when pixel data becomes available) 											*/
+%group Camera   
+/* Apple doesn't give direct access to the camera at a low-level and core frameworks only go as low as buffer allocation (i.e. when data is being saved)
+						which happens too late in the cycle for what we want (when pixel data becomes available) 										 */
 
-// Determine when camera is active by checking availability of the flashlight; if flash isn't available cam is active
+// Determine when camera is active by checking availability of the flashlight; if flash isn't available, cam is active
 %hook SBUIFlashlightController 
 -(void)_updateStateWithAvailable:(BOOL)arg1 level:(unsigned long long)arg2 overheated:(BOOL)arg3{
 	%orig;
@@ -36,10 +36,10 @@
 %end
 
 
-%group micIndicator 
+%group Microphone 
 /* no indicator when recording video to match w iOS 14 where camera indicator takes precedent */
 
-// Determine when mic is active (pure audio recording) -- mediaserverd filter necessary --(https://stackoverflow.com/a/21571219)
+// Determine when mic is active -- mediaserverd filter necessary -- (https://stackoverflow.com/a/21571219)
 %hookf(OSStatus, AudioUnitProcess, AudioUnit unit, AudioUnitRenderActionFlags *ioActionFlags, const AudioTimeStamp *inTimeStamp, UInt32 inNumberFrames, AudioBufferList *ioData){
 	OSStatus orig = %orig;
 
@@ -56,7 +56,7 @@
 	return orig;
 }
 
-// Determine when mic is inactive (pure audio recording) -- mediaserverd filter necessary
+// Determine when mic is inactive -- mediaserverd filter necessary
 %hookf(OSStatus, AudioUnitReset, AudioUnit inUnit, AudioUnitScope inScope, AudioUnitElement inElement){
 	OSStatus orig = %orig;
 
@@ -96,7 +96,7 @@
 } 
 %end
 
-// Determine when dictation is in use
+// Determine when dictation is active
 %hook UIDictationController
 -(void)startDictation{
 	%orig;
@@ -117,21 +117,14 @@
 }
 %end
 
-// Determine when Siri is in use 
-%hook AFUISiriSession
--(void)assistantConnectionSpeechRecordingWillBegin:(id)arg1{
+// Determine when Siri is active
+%hook AFSiriClientStateManager 
+-(void)beginListeningForClient:(void*)arg1 {
 	%orig;
 
 	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micActive"), nil, nil, true);
 }
-
--(void)assistantConnectionSpeechRecordingDidEnd:(id)arg1{  //normal end 
-	%orig;
-
-	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
-}
-
--(void)_discardCurrentSpeechGroup{  //any other type of end
+-(void)endListeningForClient:(void*)arg1 {
 	%orig;
 
 	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
@@ -140,10 +133,10 @@
 %end
 
 
-%group gpsIndicator
+%group GPS
 %hook CLLocationManager
-/* GPS Indicator will only appear while the location is actively being updated. Occasioanlly, apps will simply grab it and store it (like the Weather app)
-   						in which case the indicator will appear briefly before disappearing. This is NORMAL behavior!									   */
+/* GPS Indicator will only appear while the location is actively being updated. Occasioanlly, apps will grab it and store it (like the Weather app)
+   					in which case the indicator will appear briefly before disappearing. This is NORMAL behavior!								    */
 
 -(void)startUpdatingLocation{
 	%orig;
@@ -158,7 +151,7 @@
 }
 %end
 
-//Backup EOL method since sone apps don't call stopUpdatingLocation if the app is exited randomly, for whatever reason (e.g., Camera) 
+//Backup EOL method since some apps don't call stopUpdatingLocation if the app is closed abruptly, for whatever reason (e.g., Camera) 
 %hook UIApplication
 -(void)_applicationDidEnterBackground{
 	%orig;
@@ -187,16 +180,16 @@ void preferencesChanged(){
 		CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)preferencesChanged, CFSTR("me.lightmann.quorraprefs-updated"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 
 		if(isEnabled){
-			%init(general);
+			%init(General);
 
 			if(camIndicator) 
-				%init(camIndicator);
+				%init(Camera);
 
 			if(micIndicator) 
-				%init(micIndicator); 
+				%init(Microphone); 
 		
 			if(gpsIndicator)
-				%init(gpsIndicator);
+				%init(GPS);
 		}
 	}
 }

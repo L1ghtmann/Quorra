@@ -96,6 +96,7 @@
 			<key>alternateColors</key>
 			<true/>
         </dict>
+
 		<dict>
             <key>cell</key>
             <string>PSGroupCell</string>
@@ -136,6 +137,7 @@
 			<key>PostNotification</key>
 			<string>me.lightmann.quorraprefs-updated</string>
 		</dict>
+		
 		<dict>
             <key>cell</key>
             <string>PSGroupCell</string>
