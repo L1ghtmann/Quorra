@@ -2,16 +2,16 @@
 
 @implementation FlynnsArcade
 
-+(FlynnsArcade*)sharedInstance {
++(instancetype)sharedInstance {
 	static dispatch_once_t p = 0;
-    __strong static FlynnsArcade* sharedObject = nil;
+    __strong static FlynnsArcade* sharedInstance = nil;
     dispatch_once(&p, ^{
-        sharedObject = [[self alloc] init];
+        sharedInstance = [[self alloc] init];
     });
-    return sharedObject;
+    return sharedInstance;
 }
 
--(TheGrid*)grid {
+-(TheGrid *)grid {
 	static TheGrid* grid = nil;
 	if (!grid) {
 		grid = [[TheGrid alloc] init];

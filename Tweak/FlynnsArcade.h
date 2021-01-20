@@ -1,6 +1,6 @@
 #import "TheGrid.h"
 
-@interface FlynnsArcade : NSObject
-+(FlynnsArcade*)sharedInstance;
--(TheGrid*)grid;
+@interface FlynnsArcade : NSObject 
++(instancetype)sharedInstance;
+-(TheGrid *)grid;
 @end

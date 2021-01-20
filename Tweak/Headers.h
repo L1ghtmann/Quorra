@@ -7,11 +7,11 @@
 @end
 
 //Phone Calls 
-@interface SBTelephonyManager : NSObject 
-@end
-
 @interface TUProxyCall : NSObject
 @property (nonatomic,readonly) int status; 
+@end
+
+@interface SBTelephonyManager : NSObject 
 @end
 
 //Dictation 

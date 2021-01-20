@@ -16,11 +16,11 @@
 		[self setAlpha:0];
 		[self setBackgroundColor:[UIColor clearColor]];
 		[self setUserInteractionEnabled:NO];
-		[self _setSecure: YES]; //Allows UIWindow to exist when device is locked (http://iphonedevwiki.net/index.php/Updating_extensions_for_iOS_8)
 
 		if(!self.greenDot){
 			self.greenDot = [[UIView alloc] initWithFrame:CGRectZero];
 			[self.greenDot setBackgroundColor:[UIColor greenColor]];
+			[self.greenDot.layer setCornerRadius:2.5];
 			[self.greenDot setAlpha:0];
 			[self addSubview:self.greenDot];
 		}
@@ -28,6 +28,7 @@
 		if(!self.orangeDot){			
 			self.orangeDot = [[UIView alloc] initWithFrame:CGRectZero];
 			[self.orangeDot setBackgroundColor:[UIColor orangeColor]];
+			[self.orangeDot.layer setCornerRadius:2.5];
 			[self.orangeDot setAlpha:0];
 			[self addSubview:self.orangeDot];
 		}
@@ -35,53 +36,51 @@
 		if(!self.blueDot){
 			self.blueDot = [[UIView alloc] initWithFrame:CGRectZero];
 			[self.blueDot setBackgroundColor:[UIColor colorWithRed:44.0f/255.0f green:143.0f/255.0f blue:255.0f/255.0f alpha:1.0]]; 
+			[self.blueDot.layer setCornerRadius:2.5];
 			[self.blueDot setAlpha:0];
 			[self addSubview:self.blueDot];
 		}
 
-		int notify_token2;
+		int notify_token;
+		// Respond to usage notifications and display indicator(s) accordingly
+		notify_register_dispatch("me.lightmann.quorra/camActive", &notify_token, dispatch_get_main_queue(), ^(int token) {
+			[UIView animateWithDuration:0.5 animations:^{
+				[[self greenDot] setAlpha:1];
+			}];
+		});
+		notify_register_dispatch("me.lightmann.quorra/camInactive", &notify_token, dispatch_get_main_queue(), ^(int token) {
+			[UIView animateWithDuration:0.5 animations:^{
+				[[self greenDot] setAlpha:0];
+			}];
+		});
+		notify_register_dispatch("me.lightmann.quorra/micActive", &notify_token, dispatch_get_main_queue(), ^(int token) {
+			[UIView animateWithDuration:0.5 animations:^{
+				[[self orangeDot] setAlpha:1];
+			}];
+		});
+		notify_register_dispatch("me.lightmann.quorra/micInactive", &notify_token, dispatch_get_main_queue(), ^(int token) {
+			[UIView animateWithDuration:0.5 animations:^{
+				[[self orangeDot] setAlpha:0];
+			}];
+		});
+		notify_register_dispatch("me.lightmann.quorra/gpsActive", &notify_token, dispatch_get_main_queue(), ^(int token) {
+			[UIView animateWithDuration:0.5 animations:^{
+				[[self blueDot] setAlpha:1];
+			}];
+		});
+		notify_register_dispatch("me.lightmann.quorra/gpsInactive", &notify_token, dispatch_get_main_queue(), ^(int token) {
+			[UIView animateWithDuration:0.5 animations:^{
+				[[self blueDot] setAlpha:0];
+			}];
+		});
 
-			notify_register_dispatch("me.lightmann.quorra/camActive", &notify_token2, dispatch_get_main_queue(), ^(int token){
-				[UIView animateWithDuration:0.5 animations:^{
-					[[self greenDot] setAlpha:1];
-    			}];
-			});
-			notify_register_dispatch("me.lightmann.quorra/camInactive", &notify_token2, dispatch_get_main_queue(), ^(int token){
-				[UIView animateWithDuration:0.5 animations:^{
-					[[self greenDot] setAlpha:0];
-    			}];
-			});
-	
-
-			notify_register_dispatch("me.lightmann.quorra/micActive", &notify_token2, dispatch_get_main_queue(), ^(int token){
-				[UIView animateWithDuration:0.5 animations:^{
-					[[self orangeDot] setAlpha:1];
-    			}];
-			});
-			notify_register_dispatch("me.lightmann.quorra/micInactive", &notify_token2, dispatch_get_main_queue(), ^(int token){
-				[UIView animateWithDuration:0.5 animations:^{
-					[[self orangeDot] setAlpha:0];
-    			}];
-			});
-		
-
-			notify_register_dispatch("me.lightmann.quorra/gpsActive", &notify_token2, dispatch_get_main_queue(), ^(int token){
-				[UIView animateWithDuration:0.5 animations:^{
-					[[self blueDot] setAlpha:1];
-    			}];
-			});
-			notify_register_dispatch("me.lightmann.quorra/gpsInactive", &notify_token2, dispatch_get_main_queue(), ^(int token){
-				[UIView animateWithDuration:0.5 animations:^{
-					[[self blueDot] setAlpha:0];
-    			}];
-			});
 
 		[self layoutIndicators];
 
 		//Add self as observer for orientation change notifications. Responded to below
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(rotated:) name:UIDeviceOrientationDidChangeNotification object:nil];
 
-    	if(kCFCoreFoundationVersionNumber >= 1600) {			
+    	if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"13")) {			
 			// In some apps the appWindow scene is not automatically passed to TheGrid, so we have to manually grab it in order to take hold in said apps
 			if(!self.windowScene && [[UIApplication sharedApplication] windows].count){
 				UIWindow *appWindow = [[[UIApplication sharedApplication] windows] objectAtIndex:0]; 
@@ -127,10 +126,6 @@
 		[self.orangeDot setFrame:CGRectMake(xPos,yPos,5,5)];
 		[self.blueDot setFrame:CGRectMake(xPos-10,yPos,5,5)]; 
 	}	
-
-	[self.greenDot.layer setCornerRadius:self.greenDot.frame.size.height/2];
-	[self.orangeDot.layer setCornerRadius:self.greenDot.frame.size.height/2];
-	[self.blueDot.layer setCornerRadius:self.greenDot.frame.size.height/2];
 }
 
 //positioning for left landscape 
@@ -193,7 +188,7 @@
 	}];
 }
 
-//deal with rotation and hiding in landscape
+//deal with rotation and hiding when in landscape
 -(void)rotated:(NSNotification *)notification {
 	UIDevice * device = notification.object;
 
@@ -222,6 +217,11 @@
 	};
 }
 
+//allows TheGrid to display when the device is locked (for LS camera)
++(BOOL)_isSecure{
+	return YES;
+}
+
 //prevents TheGrid from taking control of the status bar 
 -(BOOL)_canAffectStatusBarAppearance{
 	return NO;
@@ -242,7 +242,9 @@ void otherPreferencesChanged(){
 }
 
 %ctor {
-	otherPreferencesChanged();
+	if ([[[[NSProcessInfo processInfo] arguments] objectAtIndex:0] containsString:@"/Application"] || [[NSProcessInfo processInfo].processName isEqualToString:@"SpringBoard"] || [[NSProcessInfo processInfo].processName isEqualToString:@"mediaserverd"]) {
+		otherPreferencesChanged();
 
-	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)otherPreferencesChanged, CFSTR("me.lightmann.quorraprefs-updated"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
+		CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)otherPreferencesChanged, CFSTR("me.lightmann.quorraprefs-updated"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
+	}
 }

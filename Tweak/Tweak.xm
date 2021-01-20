@@ -6,7 +6,7 @@
 // Quorra
 
 %group General
-// Initalize FlynnsArcade and TheGrid
+// Initialize FlynnsArcade and TheGrid
 %hook SpringBoard
 -(void)applicationDidFinishLaunching:(id)application{
 	%orig;
@@ -17,66 +17,61 @@
 %end
 
 
-%group Camera   
-/* Apple doesn't give direct access to the camera at a low-level and core frameworks only go as low as buffer allocation (i.e. when data is being saved)
-						which happens too late in the cycle for what we want (when pixel data becomes available) 										 */
-
-// Determine when camera is active by checking availability of the flashlight; if flash isn't available, cam is active
+%group Camera
+// Determine when camera is active by checking availability of the flashlight -- if flash isn't available then the cam is active 
+// * Won't work for devices w/o a flashlight *
 %hook SBUIFlashlightController 
 -(void)_updateStateWithAvailable:(BOOL)arg1 level:(unsigned long long)arg2 overheated:(BOOL)arg3{
 	%orig;
 
-	if(!arg1)
+	if(!arg1){
 		CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/camActive"), nil, nil, true);
-	
-	else if(arg1)
+	}
+	else if(arg1){
 		CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/camInactive"), nil, nil, true);
+	}
 }
 %end
 %end
 
 
 %group Microphone 
-/* no indicator when recording video to match w iOS 14 where camera indicator takes precedent */
-
-// Determine when mic is active -- mediaserverd filter necessary -- (https://stackoverflow.com/a/21571219)
-%hookf(OSStatus, AudioUnitProcess, AudioUnit unit, AudioUnitRenderActionFlags *ioActionFlags, const AudioTimeStamp *inTimeStamp, UInt32 inNumberFrames, AudioBufferList *ioData){
+// Determine when mic is active (*mediaserverd filter necessary)
+// The implementation in these AudioUnit hooks is far from perfect: 
+// As a result of the conditions checked, the mic indicator may be present or missing when it shouldn't be (ex: missing in iMessage and Discord)
+// The conditions checked in said hooks prevent the mic indicator from displaying for phone calls, dictation, and siri, so those each get their own hooks  
+%hookf(OSStatus, AudioUnitInitialize, AudioUnit inUnit){
 	OSStatus orig = %orig;
 
-        AudioComponentDescription unitDescription = {0};
-        AudioComponentGetDescription(AudioComponentInstanceGetComponent(unit), &unitDescription);
+		AudioComponentDescription desc = {0};
+		AudioComponentGetDescription(AudioComponentInstanceGetComponent(inUnit), &desc);
+		
+		//description of a component prepping for mic input 
+		if(desc.componentType == kAudioUnitType_Output && desc.componentSubType == kAudioUnitSubType_RemoteIO && desc.componentFlags == 0 && desc.componentFlagsMask == 0){
+		    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micActive"), nil, nil, true);
+		}
 
-        // check for mic input data 
-        if(unitDescription.componentSubType == 'agc2'){
-            if(inNumberFrames > 0){
-				CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micActive"), nil, nil, true);
-            }
-        }
-		    
 	return orig;
 }
 
-// Determine when mic is inactive -- mediaserverd filter necessary
-%hookf(OSStatus, AudioUnitReset, AudioUnit inUnit, AudioUnitScope inScope, AudioUnitElement inElement){
+// Determine when mic is inactive (*mediaserverd filter necessary)
+%hookf(OSStatus, AudioUnitUninitialize, AudioUnit inUnit){
 	OSStatus orig = %orig;
 
-		AudioComponentDescription unitDescription = {0};
-		AudioComponentGetDescription(AudioComponentInstanceGetComponent(inUnit), &unitDescription);
+		AudioComponentDescription desc = {0};
+		AudioComponentGetDescription(AudioComponentInstanceGetComponent(inUnit), &desc);
 
-		// post notification only for input audio units in hook above (not just any unit) 
-		if(unitDescription.componentSubType == 'agc2'){
+		//matching description to unit(s) monitored above 
+		if(desc.componentType == kAudioUnitType_Output && desc.componentSubType == kAudioUnitSubType_RemoteIO && desc.componentFlags == 0 && desc.componentFlagsMask == 0){
 			CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
 		}
                 
 	return orig;
 }
 
-// Phone Call EOL methods
+// Determine when a call is active -- taken from Laoyur's CallKiller (https://github.com/laoyur/CallKiller-iOS/blob/master/callkiller/callkiller.xm)
 %hook SBTelephonyManager
-// Taken from Laoyur's CallKiller (https://github.com/laoyur/CallKiller-iOS/blob/master/callkiller/callkiller.xm)
 -(void)callEventHandler:(NSNotification*)arg1{
-	%orig;
-
     if(arg1 && arg1.object){
         TUProxyCall *call = arg1.object;
        
@@ -89,10 +84,14 @@
             6 - disconnected
         */
 
-        if(call.status == 5 || call.status == 6){
+		if(call.status == 1){
+			CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micActive"), nil, nil, true);
+		}
+        else if(call.status == 6){
 			CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
         }
     }
+	%orig;
 } 
 %end
 
@@ -113,7 +112,7 @@
 -(void)cancelDictation{ //any other type of end 
 	%orig;
 	
-	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);	
+	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
 }
 %end
 
@@ -124,6 +123,7 @@
 
 	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micActive"), nil, nil, true);
 }
+
 -(void)endListeningForClient:(void*)arg1 {
 	%orig;
 
@@ -135,9 +135,9 @@
 
 %group GPS
 %hook CLLocationManager
-/* GPS Indicator will only appear while the location is actively being updated. Occasioanlly, apps will grab it and store it (like the Weather app)
-   					in which case the indicator will appear briefly before disappearing. This is NORMAL behavior!								    */
-
+// GPS Indicator will only appear while the location is actively being updated. 
+// Occasioanlly, apps will grab it and store it (like the Weather app) in which case the indicator will appear briefly before disappearing. 
+// This is NORMAL behavior!								    
 -(void)startUpdatingLocation{
 	%orig;
 	
@@ -151,9 +151,9 @@
 }
 %end
 
-//Backup EOL method since some apps don't call stopUpdatingLocation if the app is closed abruptly, for whatever reason (e.g., Camera) 
+//Backup EOL method -- Ideally wouldn't need this, but some apps don't call stopUpdatingLocation if closed abruptly (e.g., Camera) 
 %hook UIApplication
--(void)_applicationDidEnterBackground{
+-(void)applicationWillSuspend{
 	%orig;
 	
 	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/gpsInactive"), nil, nil, true);
@@ -174,22 +174,19 @@ void preferencesChanged(){
 
 %ctor{
 	if ([[[[NSProcessInfo processInfo] arguments] objectAtIndex:0] containsString:@"/Application"] || [[NSProcessInfo processInfo].processName isEqualToString:@"SpringBoard"] || [[NSProcessInfo processInfo].processName isEqualToString:@"mediaserverd"]) {
-		
+
 		preferencesChanged();
 
 		CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)preferencesChanged, CFSTR("me.lightmann.quorraprefs-updated"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 
-		if(isEnabled){
+		if(isEnabled){	
 			%init(General);
 
-			if(camIndicator) 
-				%init(Camera);
+			if(camIndicator) %init(Camera);
 
-			if(micIndicator) 
-				%init(Microphone); 
-		
-			if(gpsIndicator)
-				%init(GPS);
+			if(micIndicator) %init(Microphone);
+
+			if(gpsIndicator) %init(GPS);
 		}
 	}
 }
