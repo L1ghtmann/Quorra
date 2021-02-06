@@ -2,7 +2,6 @@
 
 //https://stackoverflow.com/a/5337804
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
-
 @interface UIWindow (Private)
 +(BOOL)_isSecure;
 -(BOOL)_canAffectStatusBarAppearance;
@@ -17,7 +16,11 @@
 -(void)landscapeRightLayout;
 -(void)gridPowerOn;
 -(void)gridPowerOff;
--(void)rotated:(NSNotification *)notification;
+-(void)rotated;
+@end
+
+@interface UIApplication (Grid)
+- (UIDeviceOrientation)_frontMostAppOrientation;
 @end
 
 //prefs
@@ -28,3 +31,6 @@ static int xPos;
 
 static int landYPos;
 static int landXPos;
+
+//Determine the actual device orientation
+static UIDeviceOrientation currOrientation;
