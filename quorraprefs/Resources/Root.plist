@@ -88,6 +88,38 @@
 			<key>defaults</key>
 			<string>me.lightmann.quorraprefs</string>
 			<key>label</key>
+            <string>Produce Log on LS</string>
+            <key>key</key>
+            <string>usageLog</string>
+            <key>PostNotification</key>
+			<string>me.lightmann.quorraprefs-updated</string>
+			<key>alternateColors</key>
+			<true/>
+        </dict>
+		<dict>
+          <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>me.lightmann.quorraprefs</string>
+			<key>label</key>
+            <string>Limit Log To Most Recent Entry</string>
+            <key>key</key>
+            <string>onlyRecent</string>
+            <key>PostNotification</key>
+			<string>me.lightmann.quorraprefs-updated</string>
+			<key>alternateColors</key>
+			<true/>
+        </dict>
+		<dict>
+          <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>me.lightmann.quorraprefs</string>
+			<key>label</key>
             <string>Hide Indicators In Landscape</string>
             <key>key</key>
             <string>noLandDots</string>

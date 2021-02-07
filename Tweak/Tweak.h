@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#import <AVFoundation/AVFoundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <CoreLocation/CoreLocation.h>
 
@@ -28,3 +29,4 @@ static BOOL isEnabled;
 static BOOL camIndicator;
 static BOOL micIndicator;
 static BOOL gpsIndicator;
+static BOOL usageLog;  

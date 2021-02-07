@@ -5,7 +5,9 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = Quorra
 
-Quorra_FILES = Tweak/FlynnsArcade.m Tweak/TheGrid.x Tweak/Tweak.xm
+Quorra_FILES = Tweak/FlynnsArcade.x Tweak/TheGrid.x Tweak/Tweak.xm
+Quorra_LIBRARIES = mryipc
+Quorra_PRIVATE_FRAMEWORKS = BulletinBoard
 Quorra_CFLAGS = -fobjc-arc
 
 include $(THEOS_MAKE_PATH)/tweak.mk

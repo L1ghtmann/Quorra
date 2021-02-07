@@ -1,16 +1,18 @@
-#import "Headers.h"
+#import "Tweak.h"
 #import "FlynnsArcade.h"
 
 // Lightmann
 // Made during COVID-19
 // Quorra
 
+static MRYIPCCenter *portal = [MRYIPCCenter centerNamed:@"me.lightmann.quorra-portal"];
+
 %group General
-// Initialize FlynnsArcade and TheGrid
+// Initalize FlynnsArcade and TheGrid
 %hook SpringBoard
 -(void)applicationDidFinishLaunching:(id)application{
 	%orig;
-
+	
 	[[[FlynnsArcade sharedInstance] grid] gridPowerOn];
 }
 %end
@@ -18,17 +20,19 @@
 
 
 %group Camera
-// Determine when camera is active by checking availability of the flashlight -- if flash isn't available then the cam is active 
-// * Won't work for devices w/o a flashlight *
+// Determine when camera is active by checking availability of the flashlight; if flash isn't available, cam is active 
+// *Won't work for devices w/o a flashlight*
 %hook SBUIFlashlightController 
 -(void)_updateStateWithAvailable:(BOOL)arg1 level:(unsigned long long)arg2 overheated:(BOOL)arg3{
 	%orig;
 
 	if(!arg1){
-		CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/camActive"), nil, nil, true);
+		[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"camActive"}];
+	
+		if(usageLog) [portal callExternalVoidMethod:@selector(prepNotifWithInfo:) withArguments:@{@"type" : @"Camera", @"process" : [[NSProcessInfo processInfo] processName]}];
 	}
 	else if(arg1){
-		CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/camInactive"), nil, nil, true);
+		[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"camInactive"}];
 	}
 }
 %end
@@ -36,36 +40,45 @@
 
 
 %group Microphone 
+
 // Determine when mic is active (*mediaserverd filter necessary)
-// The implementation in these AudioUnit hooks is far from perfect: 
-// As a result of the conditions checked, the mic indicator may be present or missing when it shouldn't be (ex: missing in iMessage and Discord)
-// The conditions checked in said hooks prevent the mic indicator from displaying for phone calls, dictation, and siri, so those each get their own hooks  
 %hookf(OSStatus, AudioUnitInitialize, AudioUnit inUnit){
 	OSStatus orig = %orig;
-
+	
 		AudioComponentDescription desc = {0};
 		AudioComponentGetDescription(AudioComponentInstanceGetComponent(inUnit), &desc);
 		
-		//description of a component prepping for mic input 
-		if(desc.componentType == kAudioUnitType_Output && desc.componentSubType == kAudioUnitSubType_RemoteIO && desc.componentFlags == 0 && desc.componentFlagsMask == 0){
-		    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micActive"), nil, nil, true);
+		//attempt to filter out any inaccuracies with my check below
+		if([[AVAudioSession sharedInstance] recordPermission] == AVAudioSessionRecordPermissionGranted) {
+			//description of a component preping for mic input 
+			if(desc.componentType == kAudioUnitType_Output && desc.componentSubType == kAudioUnitSubType_RemoteIO && desc.componentFlags == 0 && desc.componentFlagsMask == 0){
+				[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micActive"}];
+				
+				if(usageLog){
+					//prevent spamming to the log
+					static dispatch_once_t once;
+					dispatch_once(&once, ^{
+						[portal callExternalVoidMethod:@selector(prepNotifWithInfo:) withArguments:@{@"type" : @"Microphone", @"process" : [[NSProcessInfo processInfo] processName]}];
+					});
+				}
+			}
 		}
-
+	
 	return orig;
 }
 
 // Determine when mic is inactive (*mediaserverd filter necessary)
 %hookf(OSStatus, AudioUnitUninitialize, AudioUnit inUnit){
 	OSStatus orig = %orig;
-
+	
 		AudioComponentDescription desc = {0};
 		AudioComponentGetDescription(AudioComponentInstanceGetComponent(inUnit), &desc);
 
 		//matching description to unit(s) monitored above 
 		if(desc.componentType == kAudioUnitType_Output && desc.componentSubType == kAudioUnitSubType_RemoteIO && desc.componentFlags == 0 && desc.componentFlagsMask == 0){
-			CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
+			[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micInactive"}];
 		}
-                
+    
 	return orig;
 }
 
@@ -74,7 +87,6 @@
 -(void)callEventHandler:(NSNotification*)arg1{
     if(arg1 && arg1.object){
         TUProxyCall *call = arg1.object;
-       
 	    /*
             call.status:
             1 - call established
@@ -83,14 +95,16 @@
             5 - disconnecting
             6 - disconnected
         */
-
 		if(call.status == 1){
-			CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micActive"), nil, nil, true);
+			[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micActive"}];
+			
+			if(usageLog) [portal callExternalVoidMethod:@selector(prepNotifWithInfo:) withArguments:@{@"type" : @"Microphone", @"process" : [[NSProcessInfo processInfo] processName]}];
 		}
         else if(call.status == 6){
-			CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
+			[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micInactive"}];
         }
     }
+	
 	%orig;
 } 
 %end
@@ -100,19 +114,21 @@
 -(void)startDictation{
 	%orig;
 
-	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micActive"), nil, nil, true);
+	[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micActive"}];
+	
+	if(usageLog) [portal callExternalVoidMethod:@selector(prepNotifWithInfo:) withArguments:@{@"type" : @"Microphone", @"process" : [[NSProcessInfo processInfo] processName]}];
 }
 
 -(void)stopDictation{ //normal end
 	%orig;
 	
-	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
+	[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micInactive"}];
 }
 
 -(void)cancelDictation{ //any other type of end 
 	%orig;
 	
-	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
+	[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micInactive"}];
 }
 %end
 
@@ -121,42 +137,46 @@
 -(void)beginListeningForClient:(void*)arg1 {
 	%orig;
 
-	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micActive"), nil, nil, true);
+	[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micActive"}];
+	
+	if(usageLog) [portal callExternalVoidMethod:@selector(prepNotifWithInfo:) withArguments:@{@"type" : @"Microphone", @"process" : [[NSProcessInfo processInfo] processName]}];
 }
 
 -(void)endListeningForClient:(void*)arg1 {
 	%orig;
 
-	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/micInactive"), nil, nil, true);
+	[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micInactive"}];
 }
 %end
 %end
 
 
 %group GPS
-%hook CLLocationManager
+// Determine when the GPS is active
 // GPS Indicator will only appear while the location is actively being updated. 
 // Occasioanlly, apps will grab it and store it (like the Weather app) in which case the indicator will appear briefly before disappearing. 
-// This is NORMAL behavior!								    
--(void)startUpdatingLocation{
+// This is NORMAL behavior!		
+%hook CLLocationManagerStateTracker
+-(void)setUpdatingLocation:(BOOL)updating{				    
 	%orig;
-	
-	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/gpsActive"), nil, nil, true);
-}
 
--(void)stopUpdatingLocation{
-	%orig;
-	
-	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/gpsInactive"), nil, nil, true);
+	if(updating){
+		[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"gpsActive"}];
+		
+		if(usageLog) [portal callExternalVoidMethod:@selector(prepNotifWithInfo:) withArguments:@{@"type" : @"GPS", @"process" : [[NSProcessInfo processInfo] processName]}];
+	}
+	else{
+		[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"gpsInactive"}];
+	}	
 }
 %end
 
-//Backup EOL method -- Ideally wouldn't need this, but some apps don't call stopUpdatingLocation if closed abruptly (e.g., Camera) 
+// Backup EOL method -- CLLocationManager doesn't appear to have an EOL method (when an app is closed/suspended) 
 %hook UIApplication
 -(void)applicationWillSuspend{
 	%orig;
 	
-	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("me.lightmann.quorra/gpsInactive"), nil, nil, true);
+	[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"gpsInactive"}];
 }
 %end
 %end
@@ -170,16 +190,19 @@ void preferencesChanged(){
 	camIndicator = (prefs && [prefs objectForKey:@"camIndicator"] ? [[prefs valueForKey:@"camIndicator"] boolValue] : YES );
 	micIndicator = (prefs && [prefs objectForKey:@"micIndicator"] ? [[prefs valueForKey:@"micIndicator"] boolValue] : YES );
 	gpsIndicator = (prefs && [prefs objectForKey:@"gpsIndicator"] ? [[prefs valueForKey:@"gpsIndicator"] boolValue] : YES );
+	
+	//NSUserDefaults doesn't return a value for usageLog in some processes (will default to NO), so we read the value directly from the .plist (which works, but isn't recommended)
+	NSDictionary *directPrefs = [[NSDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/me.lightmann.quorraprefs.plist"];
+	usageLog = (directPrefs && [directPrefs objectForKey:@"usageLog"] ? [[directPrefs valueForKey:@"usageLog"] boolValue] : NO );
 }
 
 %ctor{
 	if ([[[[NSProcessInfo processInfo] arguments] objectAtIndex:0] containsString:@"/Application"] || [[NSProcessInfo processInfo].processName isEqualToString:@"SpringBoard"] || [[NSProcessInfo processInfo].processName isEqualToString:@"mediaserverd"]) {
-
 		preferencesChanged();
 
 		CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)preferencesChanged, CFSTR("me.lightmann.quorraprefs-updated"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 
-		if(isEnabled){	
+		if(isEnabled){							
 			%init(General);
 
 			if(camIndicator) %init(Camera);
