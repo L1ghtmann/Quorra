@@ -3,6 +3,8 @@
 
 #define kWidth [UIScreen mainScreen].bounds.size.width 
 #define kHeight [UIScreen mainScreen].bounds.size.height
+#define kWidthLand [UIScreen mainScreen].bounds.size.height
+#define kHeightLand [UIScreen mainScreen].bounds.size.width 
 #define noNotch (kHeight < 812)
 
 @implementation TheGrid
@@ -78,7 +80,10 @@
 		[self layoutIndicators];
 
 		//Add self as observer for orientation change notifications. Responded to below
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(rotated:) name:UIDeviceOrientationDidChangeNotification object:nil];
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(rotated) name:@"com.apple.springboard.screenchanged" object:nil];
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(rotated) name:@"UIWindowDidRotateNotification" object:nil];
+		//Save initial orientation position of the device to be compared in later stages
+		currOrientation = [[UIApplication sharedApplication] _frontMostAppOrientation];
 
     	if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"13")) {			
 			// In some apps the appWindow scene is not automatically passed to TheGrid, so we have to manually grab it in order to take hold in said apps
@@ -131,48 +136,48 @@
 //positioning for left landscape 
 -(void)landscapeLeftLayout{
 	if(!landYPos && !landXPos){ //default (centered)
-		[self.greenDot setFrame:CGRectMake(kWidth-10,(kHeight/2)+10,5,5)]; 
-		[self.orangeDot setFrame:CGRectMake(kWidth-10,(kHeight/2),5,5)]; 
-		[self.blueDot setFrame:CGRectMake(kWidth-10,(kHeight/2)-10,5,5)]; 
+		[self.greenDot setFrame:CGRectMake(kWidthLand-10,(kHeightLand/2)+10,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(kWidthLand-10,(kHeightLand/2),5,5)]; 
+		[self.blueDot setFrame:CGRectMake(kWidthLand-10,(kHeightLand/2)-10,5,5)]; 
 	}
 	else if(landYPos != 0 && !landXPos){ //y change no x
-		[self.greenDot setFrame:CGRectMake(kWidth-landYPos,(kHeight/2)+10,5,5)]; 
-		[self.orangeDot setFrame:CGRectMake(kWidth-landYPos,(kHeight/2),5,5)]; 
-		[self.blueDot setFrame:CGRectMake(kWidth-landYPos,(kHeight/2)-10,5,5)]; 
+		[self.greenDot setFrame:CGRectMake(kWidthLand-landYPos,(kHeight/2)+10,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(kWidthLand-landYPos,(kHeight/2),5,5)]; 
+		[self.blueDot setFrame:CGRectMake(kWidthLand-landYPos,(kHeight/2)-10,5,5)]; 
 	}
 	else if(!landYPos && landXPos != 0){ //x change no y
-		[self.greenDot setFrame:CGRectMake(kWidth-10,landXPos+30,5,5)]; 
-		[self.orangeDot setFrame:CGRectMake(kWidth-10,landXPos+20,5,5)]; 
-		[self.blueDot setFrame:CGRectMake(kWidth-10,landXPos+10,5,5)]; 
+		[self.greenDot setFrame:CGRectMake(kWidthLand-10,landXPos+30,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(kWidthLand-10,landXPos+20,5,5)]; 
+		[self.blueDot setFrame:CGRectMake(kWidthLand-10,landXPos+10,5,5)]; 
 	}
 	else{ //both changed
-		[self.greenDot setFrame:CGRectMake(kWidth-landYPos,landXPos+30,5,5)];
-		[self.orangeDot setFrame:CGRectMake(kWidth-landYPos,landXPos+20,5,5)];
-		[self.blueDot setFrame:CGRectMake(kWidth-landYPos,landXPos+10,5,5)]; 
+		[self.greenDot setFrame:CGRectMake(kWidthLand-landYPos,landXPos+30,5,5)];
+		[self.orangeDot setFrame:CGRectMake(kWidthLand-landYPos,landXPos+20,5,5)];
+		[self.blueDot setFrame:CGRectMake(kWidthLand-landYPos,landXPos+10,5,5)]; 
 	}	
 }
 
 //positioning for right landscape 
 -(void)landscapeRightLayout{
 	if(!landYPos && !landXPos){ //default (centered)
-		[self.greenDot setFrame:CGRectMake(10,(kHeight/2)+10,5,5)]; 
-		[self.orangeDot setFrame:CGRectMake(10,(kHeight/2),5,5)]; 
-		[self.blueDot setFrame:CGRectMake(10,(kHeight/2)-10,5,5)]; 
+		[self.greenDot setFrame:CGRectMake(10,(kHeightLand/2)+10,5,5)]; 
+		[self.orangeDot setFrame:CGRectMake(10,(kHeightLand/2),5,5)]; 
+		[self.blueDot setFrame:CGRectMake(10,(kHeightLand/2)-10,5,5)]; 
 	}
 	else if(landYPos != 0 && !landXPos){ //y change no x
-		[self.greenDot setFrame:CGRectMake(landYPos,(kHeight/2)+10,5,5)];
-		[self.orangeDot setFrame:CGRectMake(landYPos,(kHeight/2)-10,5,5)];
-		[self.blueDot setFrame:CGRectMake(landYPos,(kHeight/2)-10,5,5)]; 
+		[self.greenDot setFrame:CGRectMake(landYPos,(kHeightLand/2)+10,5,5)];
+		[self.orangeDot setFrame:CGRectMake(landYPos,(kHeightLand/2)-10,5,5)];
+		[self.blueDot setFrame:CGRectMake(landYPos,(kHeightLand/2)-10,5,5)]; 
 	}
 	else if(!landYPos && landXPos != 0){ //x change no y
-		[self.greenDot setFrame:CGRectMake(10,(kHeight-landXPos-30),5,5)];
-		[self.orangeDot setFrame:CGRectMake(10,(kHeight-landXPos-20),5,5)];
-		[self.blueDot setFrame:CGRectMake(10,(kHeight-landXPos-10),5,5)]; 
+		[self.greenDot setFrame:CGRectMake(10,(kHeightLand-landXPos-30),5,5)];
+		[self.orangeDot setFrame:CGRectMake(10,(kHeightLand-landXPos-20),5,5)];
+		[self.blueDot setFrame:CGRectMake(10,(kHeightLand-landXPos-10),5,5)]; 
 	}
 	else{ //both changed
-		[self.greenDot setFrame:CGRectMake(landYPos,(kHeight-landXPos-30),5,5)];
-		[self.orangeDot setFrame:CGRectMake(landYPos,(kHeight-landXPos-20),5,5)];
-		[self.blueDot setFrame:CGRectMake(landYPos,(kHeight-landXPos-10),5,5)]; 
+		[self.greenDot setFrame:CGRectMake(landYPos,(kHeightLand-landXPos-30),5,5)];
+		[self.orangeDot setFrame:CGRectMake(landYPos,(kHeightLand-landXPos-20),5,5)];
+		[self.blueDot setFrame:CGRectMake(landYPos,(kHeightLand-landXPos-10),5,5)]; 
 	}	
 }
 
@@ -189,10 +194,15 @@
 }
 
 //deal with rotation and hiding when in landscape
--(void)rotated:(NSNotification *)notification {
-	UIDevice * device = notification.object;
+-(void)rotated {
+	//check if orientation actually changed
+	if (currOrientation == [[UIApplication sharedApplication] _frontMostAppOrientation]) {
+        return;
+    } 
+	//if orientation changed, handle and save the current orientation pos
+    currOrientation = [[UIApplication sharedApplication] _frontMostAppOrientation];
 
-	switch(device.orientation){
+	switch(currOrientation){
 		case UIDeviceOrientationPortrait: 
 			if(noLandDots) [self gridPowerOn];
 			[self layoutIndicators];
