@@ -5,7 +5,18 @@
 // Made during COVID-19
 // Quorra
 
-static MRYIPCCenter *portal = [MRYIPCCenter centerNamed:@"me.lightmann.quorra-portal"];
+// Check for SpringBoard and act accordingly -- CPDistributedMessagingCenter isn't always necessary  
+static void sendThroughPortal(NSString *type, NSDictionary *info){
+	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.springboard"]){
+		if([type isEqualToString:@"activity"]) [[FlynnsArcade sharedInstance] handleActivity:type ofType:info];
+		else [[FlynnsArcade sharedInstance] prepNotif:type WithInfo:info];
+	}
+	else{
+		CPDistributedMessagingCenter *portal = [%c(CPDistributedMessagingCenter) centerNamed:@"me.lightmann.quorra-portal"];
+		rocketbootstrap_distributedmessagingcenter_apply(portal);
+		[portal sendMessageName:type userInfo:info];
+	}
+}
 
 %group General
 // Initalize FlynnsArcade and TheGrid
@@ -27,12 +38,12 @@ static MRYIPCCenter *portal = [MRYIPCCenter centerNamed:@"me.lightmann.quorra-po
 	%orig;
 
 	if(!arg1){
-		[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"camActive"}];
+		sendThroughPortal(@"activity", @{@"type" : @"camActive"});
 	
-		if(usageLog) [portal callExternalVoidMethod:@selector(prepNotifWithInfo:) withArguments:@{@"type" : @"Camera", @"process" : [[NSProcessInfo processInfo] processName]}];
+		if(usageLog) sendThroughPortal(@"usage", @{@"type" : @"Camera", @"process" : [[NSProcessInfo processInfo] processName]}); 
 	}
 	else if(arg1){
-		[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"camInactive"}];
+		sendThroughPortal(@"activity", @{@"type" : @"camInactive"});
 	}
 }
 %end
@@ -52,13 +63,12 @@ static MRYIPCCenter *portal = [MRYIPCCenter centerNamed:@"me.lightmann.quorra-po
 		if([[AVAudioSession sharedInstance] recordPermission] == AVAudioSessionRecordPermissionGranted) {
 			//description of a component preping for mic input 
 			if(desc.componentType == kAudioUnitType_Output && desc.componentSubType == kAudioUnitSubType_RemoteIO && desc.componentFlags == 0 && desc.componentFlagsMask == 0){
-				[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micActive"}];
-				
+				sendThroughPortal(@"activity", @{@"type" : @"micActive"});
 				if(usageLog){
 					//prevent spamming to the log
 					static dispatch_once_t once;
 					dispatch_once(&once, ^{
-						[portal callExternalVoidMethod:@selector(prepNotifWithInfo:) withArguments:@{@"type" : @"Microphone", @"process" : [[NSProcessInfo processInfo] processName]}];
+						sendThroughPortal(@"usage", @{@"type" : @"Microphone", @"process" : [[NSProcessInfo processInfo] processName]}); 
 					});
 				}
 			}
@@ -76,7 +86,7 @@ static MRYIPCCenter *portal = [MRYIPCCenter centerNamed:@"me.lightmann.quorra-po
 
 		//matching description to unit(s) monitored above 
 		if(desc.componentType == kAudioUnitType_Output && desc.componentSubType == kAudioUnitSubType_RemoteIO && desc.componentFlags == 0 && desc.componentFlagsMask == 0){
-			[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micInactive"}];
+			sendThroughPortal(@"activity", @{@"type" : @"micInactive"});
 		}
     
 	return orig;
@@ -96,12 +106,12 @@ static MRYIPCCenter *portal = [MRYIPCCenter centerNamed:@"me.lightmann.quorra-po
             6 - disconnected
         */
 		if(call.status == 1){
-			[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micActive"}];
+			sendThroughPortal(@"activity", @{@"type" : @"micActive"});
 			
-			if(usageLog) [portal callExternalVoidMethod:@selector(prepNotifWithInfo:) withArguments:@{@"type" : @"Microphone", @"process" : [[NSProcessInfo processInfo] processName]}];
+			if(usageLog) sendThroughPortal(@"usage", @{@"type" : @"Microphone", @"process" : [[NSProcessInfo processInfo] processName]});  
 		}
         else if(call.status == 6){
-			[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micInactive"}];
+			sendThroughPortal(@"activity", @{@"type" : @"micInactive"});
         }
     }
 	
@@ -114,21 +124,21 @@ static MRYIPCCenter *portal = [MRYIPCCenter centerNamed:@"me.lightmann.quorra-po
 -(void)startDictation{
 	%orig;
 
-	[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micActive"}];
-	
-	if(usageLog) [portal callExternalVoidMethod:@selector(prepNotifWithInfo:) withArguments:@{@"type" : @"Microphone", @"process" : [[NSProcessInfo processInfo] processName]}];
+	sendThroughPortal(@"activity", @{@"type" : @"micActive"});
+
+	if(usageLog) sendThroughPortal(@"usage", @{@"type" : @"Microphone", @"process" : [[NSProcessInfo processInfo] processName]});  
 }
 
 -(void)stopDictation{ //normal end
 	%orig;
 	
-	[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micInactive"}];
+	sendThroughPortal(@"activity", @{@"type" : @"micInactive"});
 }
 
 -(void)cancelDictation{ //any other type of end 
 	%orig;
 	
-	[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micInactive"}];
+	sendThroughPortal(@"activity", @{@"type" : @"micInactive"});
 }
 %end
 
@@ -137,15 +147,15 @@ static MRYIPCCenter *portal = [MRYIPCCenter centerNamed:@"me.lightmann.quorra-po
 -(void)beginListeningForClient:(void*)arg1 {
 	%orig;
 
-	[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micActive"}];
-	
-	if(usageLog) [portal callExternalVoidMethod:@selector(prepNotifWithInfo:) withArguments:@{@"type" : @"Microphone", @"process" : [[NSProcessInfo processInfo] processName]}];
+	sendThroughPortal(@"activity", @{@"type" : @"micActive"});
+
+	if(usageLog) sendThroughPortal(@"usage", @{@"type" : @"Microphone", @"process" : [[NSProcessInfo processInfo] processName]});  
 }
 
 -(void)endListeningForClient:(void*)arg1 {
 	%orig;
 
-	[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"micInactive"}];
+	sendThroughPortal(@"activity", @{@"type" : @"micInactive"});
 }
 %end
 %end
@@ -161,22 +171,30 @@ static MRYIPCCenter *portal = [MRYIPCCenter centerNamed:@"me.lightmann.quorra-po
 	%orig;
 
 	if(updating){
-		[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"gpsActive"}];
+		sendThroughPortal(@"activity", @{@"type" : @"gpsActive"});
 		
-		if(usageLog) [portal callExternalVoidMethod:@selector(prepNotifWithInfo:) withArguments:@{@"type" : @"GPS", @"process" : [[NSProcessInfo processInfo] processName]}];
+		if(usageLog) sendThroughPortal(@"usage", @{@"type" : @"GPS", @"process" : [[NSProcessInfo processInfo] processName]});  
 	}
 	else{
-		[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"gpsInactive"}];
+		sendThroughPortal(@"activity", @{@"type" : @"gpsInactive"});
 	}	
+}
+
+// EOL method in the event ^ isn't called before the process suspends/terminates
+-(void)dealloc{
+	%orig;
+
+	sendThroughPortal(@"activity", @{@"type" : @"gpsInactive"});
 }
 %end
 
-// Backup EOL method -- CLLocationManager doesn't appear to have an EOL method (when an app is closed/suspended) 
+// Backup EOL method in the event ^ isn't called (timely) either    
 %hook UIApplication
 -(void)applicationWillSuspend{
 	%orig;
 	
-	[portal callExternalVoidMethod:@selector(handleActivity:) withArguments:@{@"activity" : @"gpsInactive"}];
+	// check that the app doesn't allow for background location updates
+	if(!((CLLocationManager *)[CLLocationManager sharedManager]).allowsBackgroundLocationUpdates) sendThroughPortal(@"activity", @{@"type" : @"gpsInactive"});
 }
 %end
 %end
@@ -202,7 +220,7 @@ void preferencesChanged(){
 
 		CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)preferencesChanged, CFSTR("me.lightmann.quorraprefs-updated"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 
-		if(isEnabled){							
+		if(isEnabled){					
 			%init(General);
 
 			if(camIndicator) %init(Camera);

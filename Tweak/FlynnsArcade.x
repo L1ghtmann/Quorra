@@ -11,44 +11,46 @@
     return sharedInstance;
 }
 
-// IPC setup 
+// IPC setup -- reference:(https://iphonedevwiki.net/index.php/RocketBootstrap#CPDistributedMessagingCenter_Example)
 -(instancetype)init {
 	self = [super init];
 
 	if(self){
-		_center = [MRYIPCCenter centerNamed:@"me.lightmann.quorra-portal"];
-		[_center addTarget:self action:@selector(handleActivity:)];
+		_messagingCenter = [%c(CPDistributedMessagingCenter) centerNamed:@"me.lightmann.quorra-portal"];
+		rocketbootstrap_distributedmessagingcenter_apply(_messagingCenter);
+		[_messagingCenter runServerOnCurrentThread];
 
-		if(usageLog2) [_center addTarget:self action:@selector(prepNotifWithInfo:)];
+		[_messagingCenter registerForMessageName:@"activity" target:self selector:@selector(handleActivity:ofType:)];
+		if(usageLog2) [_messagingCenter registerForMessageName:@"usage" target:self selector:@selector(prepNotif:WithInfo:)];
 	}
 	
 	return self;
 }
 
 // Respond to usage messages and display indicator(s) accordingly
--(void)handleActivity:(NSDictionary *)args {
+-(void)handleActivity:(NSString *)activity ofType:(NSDictionary *)info {
 	//crashes w/o a delay (needs time for indicators (UIViews) to render before setAlpha:) ...
 	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.05 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-		NSString *activity = args[@"activity"];
+		NSString *type = info[@"type"];
 		TheGrid *theGrid = [self grid];
 
 		[UIView animateWithDuration:0.5 animations:^{
-			if([activity isEqualToString:@"camActive"]){
+			if([type isEqualToString:@"camActive"]){
 				[[theGrid greenDot] setAlpha:1];
 			}
-			else if([activity isEqualToString:@"camInactive"]){
+			else if([type isEqualToString:@"camInactive"]){
 				[[theGrid greenDot] setAlpha:0];
 			}
-			else if([activity isEqualToString:@"micActive"]){
+			else if([type isEqualToString:@"micActive"]){
 				[[theGrid orangeDot] setAlpha:1];
 			}
-			else if([activity isEqualToString:@"micInactive"]){
+			else if([type isEqualToString:@"micInactive"]){
 				[[theGrid orangeDot] setAlpha:0];
 			}
-			else if([activity isEqualToString:@"gpsActive"]){
+			else if([type isEqualToString:@"gpsActive"]){
 				[[theGrid blueDot] setAlpha:1];
 			}
-			else if([activity isEqualToString:@"gpsInactive"]){
+			else if([type isEqualToString:@"gpsInactive"]){
 				[[theGrid blueDot] setAlpha:0];
 			}
 		}];
@@ -61,41 +63,34 @@
 	
 	BBBulletin* bulletin = [[%c(BBBulletin) alloc] init];
 	bulletin.title = @"Quorra";
-	bulletin.message = msg;
-	bulletin.sectionID = @"com.apple.Preferences";
+	bulletin.message = msg; 
+    bulletin.sectionID = @"com.apple.mobiletimer"; //NOTE: on iOS 12 some bundleIDs won't post notifs to the LS (e.g., com.apple.Preferences) 
 	bulletin.bulletinID = [[NSProcessInfo processInfo] globallyUniqueString];
 	bulletin.recordID = [[NSProcessInfo processInfo] globallyUniqueString];
 	bulletin.publisherBulletinID = [[NSProcessInfo processInfo] globallyUniqueString];
-	bulletin.defaultAction = [%c(BBAction) actionWithLaunchBundleID:@"com.apple.Preferences" callblock:nil];
 	bulletin.date = [NSDate new];
 	bulletin.clearable = YES;
 	bulletin.showsMessagePreview = YES;
 
-	if([bbServer respondsToSelector:@selector(publishBulletin:destinations:alwaysToLockScreen:)]){
-		dispatch_sync(__BBServerQueue, ^{
-			[bbServer publishBulletin:bulletin destinations:4 alwaysToLockScreen:YES];
-		});
-	} 
-	else if([bbServer respondsToSelector:@selector(publishBulletin:destinations:)]){
-        dispatch_sync(__BBServerQueue, ^{
+	if(bbServer){
+	    dispatch_sync(__BBServerQueue, ^{
 	    	[bbServer publishBulletin:bulletin destinations:4];
         });
     }
 }
 
 // Send usage info over to BBulletin to be posted 
--(void)prepNotifWithInfo:(NSDictionary *)info {
+-(void)prepNotif:(NSString *)notif WithInfo:(NSDictionary *)info {
 	[self usageNotif:[NSString stringWithFormat:@"%@ %@ %@", info[@"type"], @"is in use by:", info[@"process"]]];
 }
 
-//taken from Conor's Playing (https://github.com/conorthedev/Playing/blob/02071b3fcb7bdeec8bcc86e77169b3a65bdcee16/libplaying/PlayingNotificationManager.m)
+//modified from Conor's Playing (https://github.com/conorthedev/Playing/blob/02071b3fcb7bdeec8bcc86e77169b3a65bdcee16/libplaying/PlayingNotificationManager.m)
 -(void)clearNotifications {
-    dispatch_sync(__BBServerQueue, ^{
-        if(bbServer != NULL) {
-            NSString *bundleID = @"com.apple.Preferences";
-            [bbServer _clearSection:bundleID];
-        }
-	});
+	if(bbServer) {
+		dispatch_sync(__BBServerQueue, ^{
+            [bbServer _clearSection:@"com.apple.mobiletimer"]; //reason for the arbitrary bundleid (clock) is because it's notifs may be cleared here
+		});
+	}
 }
 
 -(TheGrid *)grid {
@@ -112,11 +107,6 @@
 %group Notifs
 %hook BBServer
 - (id)initWithQueue:(id)arg1{
-    bbServer = %orig;
-    return bbServer;
-}
-
-- (id)initWithQueue:(id)arg1 dataProviderManager:(id)arg2 syncService:(id)arg3 dismissalSyncCache:(id)arg4 observerListener:(id)arg5 utilitiesListener:(id)arg6 conduitListener:(id)arg7 systemStateListener:(id)arg8 settingsListener:(id)arg9{
     bbServer = %orig;
     return bbServer;
 }

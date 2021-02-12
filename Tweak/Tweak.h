@@ -23,6 +23,11 @@
 @interface AFSiriClientStateManager : NSObject
 @end
 
+//GPS
+@interface CLLocationManager (Private)
++(id)sharedManager;
+@end
+
 //prefs
 static BOOL isEnabled;
 
