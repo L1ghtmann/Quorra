@@ -11,7 +11,7 @@
 -(void)prepNotif:(NSString *)notif WithInfo:(NSDictionary *)info;
 @end
 
-//usage notifs
+// usage notifs
 @interface BBBulletin : NSObject
 @property (nonatomic,copy) NSString* sectionID;
 @property (nonatomic,copy) NSString* bulletinID;
@@ -25,8 +25,8 @@
 @end
 
 @interface BBServer : NSObject
--(void)publishBulletin:(id)arg1 destinations:(unsigned long long)arg2;
 -(id)initWithQueue:(id)arg1;
+-(void)publishBulletin:(id)arg1 destinations:(unsigned long long)arg2;
 -(void)dealloc;
 -(void)_clearSection:(NSString*)arg1;
 @end
@@ -34,6 +34,6 @@
 extern dispatch_queue_t __BBServerQueue;
 static BBServer* bbServer;
 
-//prefs
+// prefs
 static BOOL usageLog2;
 static BOOL onlyRecent;

@@ -19,7 +19,7 @@ static void sendThroughPortal(NSString *type, NSDictionary *info){
 }
 
 %group General
-// Initalize FlynnsArcade and TheGrid
+// Initialize FlynnsArcade and TheGrid
 %hook SpringBoard
 -(void)applicationDidFinishLaunching:(id)application{
 	%orig;
@@ -59,13 +59,13 @@ static void sendThroughPortal(NSString *type, NSDictionary *info){
 		AudioComponentDescription desc = {0};
 		AudioComponentGetDescription(AudioComponentInstanceGetComponent(inUnit), &desc);
 		
-		//attempt to filter out any inaccuracies with my check below
+		// attempt to filter out any inaccuracies with my check below
 		if([[AVAudioSession sharedInstance] recordPermission] == AVAudioSessionRecordPermissionGranted) {
-			//description of a component preping for mic input 
+			// description of a component preping for mic input 
 			if(desc.componentType == kAudioUnitType_Output && desc.componentSubType == kAudioUnitSubType_RemoteIO && desc.componentFlags == 0 && desc.componentFlagsMask == 0){
 				sendThroughPortal(@"activity", @{@"type" : @"micActive"});
 				if(usageLog){
-					//prevent spamming to the log
+					// prevent spamming to the log
 					static dispatch_once_t once;
 					dispatch_once(&once, ^{
 						sendThroughPortal(@"usage", @{@"type" : @"Microphone", @"process" : [[NSProcessInfo processInfo] processName]}); 
@@ -84,7 +84,7 @@ static void sendThroughPortal(NSString *type, NSDictionary *info){
 		AudioComponentDescription desc = {0};
 		AudioComponentGetDescription(AudioComponentInstanceGetComponent(inUnit), &desc);
 
-		//matching description to unit(s) monitored above 
+		// matching description to unit(s) monitored above 
 		if(desc.componentType == kAudioUnitType_Output && desc.componentSubType == kAudioUnitSubType_RemoteIO && desc.componentFlags == 0 && desc.componentFlagsMask == 0){
 			sendThroughPortal(@"activity", @{@"type" : @"micInactive"});
 		}
@@ -129,13 +129,13 @@ static void sendThroughPortal(NSString *type, NSDictionary *info){
 	if(usageLog) sendThroughPortal(@"usage", @{@"type" : @"Microphone", @"process" : [[NSProcessInfo processInfo] processName]});  
 }
 
--(void)stopDictation{ //normal end
+-(void)stopDictation{ // normal end
 	%orig;
 	
 	sendThroughPortal(@"activity", @{@"type" : @"micInactive"});
 }
 
--(void)cancelDictation{ //any other type of end 
+-(void)cancelDictation{ // any other type of end 
 	%orig;
 	
 	sendThroughPortal(@"activity", @{@"type" : @"micInactive"});
@@ -163,8 +163,8 @@ static void sendThroughPortal(NSString *type, NSDictionary *info){
 
 %group GPS
 // Determine when the GPS is active
-// GPS Indicator will only appear while the location is actively being updated. 
-// Occasioanlly, apps will grab it and store it (like the Weather app) in which case the indicator will appear briefly before disappearing. 
+// GPS indicator will only appear while the location is actively being updated
+// Occasioanlly, apps will grab it and store it (like the Weather app) in which case the indicator will appear briefly before disappearing
 // This is NORMAL behavior!		
 %hook CLLocationManagerStateTracker
 -(void)setUpdatingLocation:(BOOL)updating{				    

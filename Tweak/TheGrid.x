@@ -44,11 +44,11 @@
 
 		[self layoutIndicators];
 
-		//Add self as observer for orientation change notifications. Responded to below
+		// Add self as observer for orientation change notifications. Responded to below
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(rotated) name:@"com.apple.springboard.screenchanged" object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(rotated) name:@"UIWindowDidRotateNotification" object:nil];
 		
-		//Save device's current orientation (to be referenced in later stages)
+		// Save device's current orientation (to be referenced in later stages)
 		currentOrientation = [[UIApplication sharedApplication] _frontMostAppOrientation];
 
     	if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"13")) {			
@@ -63,9 +63,9 @@
 	return self;
 }
 
-//set default position and corner radius
+// default position 
 -(void)layoutIndicators{
-	if(!yPos && !xPos){ //default (centered)
+	if(!yPos && !xPos){ // default (centered)
 		if(noNotch) {
 			[self.greenDot setFrame:CGRectMake((kWidth/2)+10,17,5,5)]; 
 			[self.orangeDot setFrame:CGRectMake((kWidth/2),17,5,5)]; 
@@ -76,12 +76,12 @@
 			[self.blueDot setFrame:CGRectMake((kWidth/2)-10,34,5,5)]; 
 		}
 	}
-	else if(yPos != 0 && !xPos){ //y change no x
+	else if(yPos != 0 && !xPos){ // y change no x
 		[self.greenDot setFrame:CGRectMake((kWidth/2)+10,yPos,5,5)];
 		[self.orangeDot setFrame:CGRectMake((kWidth/2),yPos,5,5)];
 		[self.blueDot setFrame:CGRectMake((kWidth/2)-10,yPos,5,5)]; 
 	}
-	else if(!yPos && xPos != 0){ //x change no y
+	else if(!yPos && xPos != 0){ // x change no y
 		if(noNotch) {
 			[self.greenDot setFrame:CGRectMake(xPos+10,17,5,5)];
 			[self.orangeDot setFrame:CGRectMake(xPos,17,5,5)];
@@ -92,55 +92,55 @@
 			[self.blueDot setFrame:CGRectMake(xPos-10,34,5,5)]; 
 		}
 	}
-	else{ //both changed
+	else{ // both changed
 		[self.greenDot setFrame:CGRectMake(xPos+10,yPos,5,5)];
 		[self.orangeDot setFrame:CGRectMake(xPos,yPos,5,5)];
 		[self.blueDot setFrame:CGRectMake(xPos-10,yPos,5,5)]; 
 	}	
 }
 
-//positioning for left landscape 
+// left landscape position 
 -(void)landscapeLeftLayout{
-	if(!landYPos && !landXPos){ //default (centered)
+	if(!landYPos && !landXPos){ // default (centered)
 		[self.greenDot setFrame:CGRectMake(kLandWidth-10,(kLandHeight/2)+10,5,5)]; 
 		[self.orangeDot setFrame:CGRectMake(kLandWidth-10,(kLandHeight/2),5,5)]; 
 		[self.blueDot setFrame:CGRectMake(kLandWidth-10,(kLandHeight/2)-10,5,5)]; 
 	}
-	else if(landYPos != 0 && !landXPos){ //y change no x
+	else if(landYPos != 0 && !landXPos){ // y change no x
 		[self.greenDot setFrame:CGRectMake(kLandWidth-landYPos,(kLandHeight/2)+10,5,5)]; 
 		[self.orangeDot setFrame:CGRectMake(kLandWidth-landYPos,(kLandHeight/2),5,5)]; 
 		[self.blueDot setFrame:CGRectMake(kLandWidth-landYPos,(kLandHeight/2)-10,5,5)]; 
 	}
-	else if(!landYPos && landXPos != 0){ //x change no y
+	else if(!landYPos && landXPos != 0){ // x change no y
 		[self.greenDot setFrame:CGRectMake(kLandWidth-10,landXPos+30,5,5)]; 
 		[self.orangeDot setFrame:CGRectMake(kLandWidth-10,landXPos+20,5,5)]; 
 		[self.blueDot setFrame:CGRectMake(kLandWidth-10,landXPos+10,5,5)]; 
 	}
-	else{ //both changed
+	else{ // both changed
 		[self.greenDot setFrame:CGRectMake(kLandWidth-landYPos,landXPos+30,5,5)];
 		[self.orangeDot setFrame:CGRectMake(kLandWidth-landYPos,landXPos+20,5,5)];
 		[self.blueDot setFrame:CGRectMake(kLandWidth-landYPos,landXPos+10,5,5)]; 
 	}	
 }
 
-//positioning for right landscape 
+// right landscape position
 -(void)landscapeRightLayout{
-	if(!landYPos && !landXPos){ //default (centered)
+	if(!landYPos && !landXPos){ // default (centered)
 		[self.greenDot setFrame:CGRectMake(10,(kLandHeight/2)+10,5,5)]; 
 		[self.orangeDot setFrame:CGRectMake(10,(kLandHeight/2),5,5)]; 
 		[self.blueDot setFrame:CGRectMake(10,(kLandHeight/2)-10,5,5)]; 
 	}
-	else if(landYPos != 0 && !landXPos){ //y change no x
+	else if(landYPos != 0 && !landXPos){ // y change no x
 		[self.greenDot setFrame:CGRectMake(landYPos,(kLandHeight/2)+10,5,5)];
 		[self.orangeDot setFrame:CGRectMake(landYPos,(kLandHeight/2)-10,5,5)];
 		[self.blueDot setFrame:CGRectMake(landYPos,(kLandHeight/2)-10,5,5)]; 
 	}
-	else if(!landYPos && landXPos != 0){ //x change no y
+	else if(!landYPos && landXPos != 0){ // x change no y
 		[self.greenDot setFrame:CGRectMake(10,(kLandHeight-landXPos-30),5,5)];
 		[self.orangeDot setFrame:CGRectMake(10,(kLandHeight-landXPos-20),5,5)];
 		[self.blueDot setFrame:CGRectMake(10,(kLandHeight-landXPos-10),5,5)]; 
 	}
-	else{ //both changed
+	else{ // both changed
 		[self.greenDot setFrame:CGRectMake(landYPos,(kLandHeight-landXPos-30),5,5)];
 		[self.orangeDot setFrame:CGRectMake(landYPos,(kLandHeight-landXPos-20),5,5)];
 		[self.blueDot setFrame:CGRectMake(landYPos,(kLandHeight-landXPos-10),5,5)]; 
@@ -159,15 +159,15 @@
 	}];
 }
 
-//deal with rotation and hiding when in landscape
+// deal with rotation and hiding when in landscape
 -(void)rotated{
-	//check if orientation has actually changed
-	//if not, return
+	// check if orientation has actually changed
+	// if not, return
 	if(currentOrientation == [[UIApplication sharedApplication] _frontMostAppOrientation]){
         return;
     } 
 
-	//if it did, save the current orientation pos and act accordingly  
+	// if it did, save the current orientation pos and act accordingly  
     currentOrientation = [[UIApplication sharedApplication] _frontMostAppOrientation];
 
 	switch(currentOrientation){
@@ -195,12 +195,12 @@
 	};
 }
 
-//allows TheGrid to display when the device is still locked (for LS camera)
+// allows TheGrid to display when the device is still locked (for LS camera)
 +(BOOL)_isSecure{
 	return YES;
 }
 
-//prevents TheGrid from taking control of the status bar 
+// prevents TheGrid from taking control of the status bar 
 -(BOOL)_canAffectStatusBarAppearance{
 	return NO;
 }

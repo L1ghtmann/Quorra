@@ -29,7 +29,7 @@
 
 // Respond to usage messages and display indicator(s) accordingly
 -(void)handleActivity:(NSString *)activity ofType:(NSDictionary *)info {
-	//crashes w/o a delay (needs time for indicators (UIViews) to render before setAlpha:) ...
+	// crashes w/o a delay (needs time for indicators (UIViews) to render before setAlpha:) ...
 	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.05 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
 		NSString *type = info[@"type"];
 		TheGrid *theGrid = [self grid];
@@ -64,7 +64,7 @@
 	BBBulletin* bulletin = [[%c(BBBulletin) alloc] init];
 	bulletin.title = @"Quorra";
 	bulletin.message = msg; 
-    bulletin.sectionID = @"com.apple.mobiletimer"; //NOTE: on iOS 12 some bundleIDs won't post notifs to the LS (e.g., com.apple.Preferences) 
+    bulletin.sectionID = @"com.apple.mobiletimer"; // NOTE: on iOS 12 some bundleIDs won't post notifs to the LS (e.g., com.apple.Preferences) 
 	bulletin.bulletinID = [[NSProcessInfo processInfo] globallyUniqueString];
 	bulletin.recordID = [[NSProcessInfo processInfo] globallyUniqueString];
 	bulletin.publisherBulletinID = [[NSProcessInfo processInfo] globallyUniqueString];
@@ -84,7 +84,7 @@
 	[self usageNotif:[NSString stringWithFormat:@"%@ %@ %@", info[@"type"], @"is in use by:", info[@"process"]]];
 }
 
-//modified from Conor's Playing (https://github.com/conorthedev/Playing/blob/02071b3fcb7bdeec8bcc86e77169b3a65bdcee16/libplaying/PlayingNotificationManager.m)
+// modified from Conor's Playing (https://github.com/conorthedev/Playing/blob/02071b3fcb7bdeec8bcc86e77169b3a65bdcee16/libplaying/PlayingNotificationManager.m)
 -(void)clearNotifications {
 	if(bbServer) {
 		dispatch_sync(__BBServerQueue, ^{

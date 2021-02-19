@@ -3,11 +3,11 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import <CoreLocation/CoreLocation.h>
 
-//Camera 
+// Camera 
 @interface SBUIFlashlightController : UIViewController
 @end
 
-//Phone Calls 
+// Phone Calls 
 @interface TUProxyCall : NSObject
 @property (nonatomic,readonly) int status; 
 @end
@@ -15,20 +15,20 @@
 @interface SBTelephonyManager : NSObject 
 @end
 
-//Dictation 
+// Dictation 
 @interface UIDictationController : NSObject
 @end
 
-//Siri 
+// Siri 
 @interface AFSiriClientStateManager : NSObject
 @end
 
-//GPS
+// GPS
 @interface CLLocationManager (Private)
 +(id)sharedManager;
 @end
 
-//prefs
+// prefs
 static BOOL isEnabled;
 
 static BOOL camIndicator;
