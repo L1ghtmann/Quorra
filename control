@@ -1,12 +1,10 @@
 Package: me.lightmann.quorra
 Name: Quorra
-Version: 1.1.1
+Version: 1.1.1.0.1
 Depends: mobilesubstrate, preferenceloader, com.rpetrich.rocketbootstrap, firmware (>= 12.0), firmware (<< 14.0)
 Architecture: iphoneos-arm
 Description: iOS 14's indicator dots for iOS 12 & 13
 Maintainer: Lightmann
 Author: Lightmann
 Section: Tweaks
-Depiction: https://usrlightmann.github.io/depictions/?p=me.lightmann.quorra
-SileoDepiction: https://usrlightmann.github.io/sileodepictions/me.lightmann.quorra.json
-Icon: https://usrlightmann.github.io/assets/icons/me.lightmann.quorra.png
+Icon: https://raw.githubusercontent.com/UsrLightmann/Quorra/master/icon.png
