@@ -1,10 +1,16 @@
 #import <UIKit/UIKit.h>
-#import <AVFoundation/AVFoundation.h>
-#import <AudioToolbox/AudioToolbox.h>
-#import <CoreLocation/CoreLocation.h>
 
 // Camera 
 @interface SBUIFlashlightController : UIViewController
+@end
+
+// Mic 
+@interface SBApplication : NSObject
+-(NSString *)displayName;
+@end
+
+@interface SpringBoard : UIApplication
+-(SBApplication *)_accessibilityFrontMostApplication;
 @end
 
 // Phone Calls 
@@ -24,7 +30,8 @@
 @end
 
 // GPS
-@interface CLLocationManager (Private)
+@interface CLLocationManager : NSObject
+@property (assign,nonatomic) BOOL allowsBackgroundLocationUpdates; 
 +(id)sharedManager;
 @end
 

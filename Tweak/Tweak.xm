@@ -51,46 +51,21 @@ static void sendThroughPortal(NSString *type, NSDictionary *info){
 
 
 %group Microphone 
+%hook FBApplicationProcess
+// Determine when mic is active 
+-(void)setRecordingAudio:(BOOL)arg1 {
+	%orig;
 
-// Determine when mic is active (*mediaserverd filter necessary)
-%hookf(OSStatus, AudioUnitInitialize, AudioUnit inUnit){
-	OSStatus orig = %orig;
+	if(arg1){
+		sendThroughPortal(@"activity", @{@"type" : @"micActive"});
 	
-		AudioComponentDescription desc = {0};
-		AudioComponentGetDescription(AudioComponentInstanceGetComponent(inUnit), &desc);
-		
-		// attempt to filter out any inaccuracies with my check below
-		if([[AVAudioSession sharedInstance] recordPermission] == AVAudioSessionRecordPermissionGranted) {
-			// description of a component preping for mic input 
-			if(desc.componentType == kAudioUnitType_Output && desc.componentSubType == kAudioUnitSubType_RemoteIO && desc.componentFlags == 0 && desc.componentFlagsMask == 0){
-				sendThroughPortal(@"activity", @{@"type" : @"micActive"});
-				if(usageLog){
-					// prevent spamming to the log
-					static dispatch_once_t once;
-					dispatch_once(&once, ^{
-						sendThroughPortal(@"usage", @{@"type" : @"Microphone", @"process" : [[NSProcessInfo processInfo] processName]}); 
-					});
-				}
-			}
-		}
-	
-	return orig;
-}
-
-// Determine when mic is inactive (*mediaserverd filter necessary)
-%hookf(OSStatus, AudioUnitUninitialize, AudioUnit inUnit){
-	OSStatus orig = %orig;
-	
-		AudioComponentDescription desc = {0};
-		AudioComponentGetDescription(AudioComponentInstanceGetComponent(inUnit), &desc);
-
-		// matching description to unit(s) monitored above 
-		if(desc.componentType == kAudioUnitType_Output && desc.componentSubType == kAudioUnitSubType_RemoteIO && desc.componentFlags == 0 && desc.componentFlagsMask == 0){
-			sendThroughPortal(@"activity", @{@"type" : @"micInactive"});
-		}
-    
-	return orig;
-}
+		if(usageLog) sendThroughPortal(@"usage", @{@"type" : @"Microphone", @"process" : [[(SpringBoard*)[UIApplication sharedApplication] _accessibilityFrontMostApplication] displayName]}); 
+	}
+	else{
+		sendThroughPortal(@"activity", @{@"type" : @"micInactive"});	
+	}
+} 
+%end
 
 // Determine when a call is active -- taken from Laoyur's CallKiller (https://github.com/laoyur/CallKiller-iOS/blob/master/callkiller/callkiller.xm)
 %hook SBTelephonyManager
@@ -188,13 +163,14 @@ static void sendThroughPortal(NSString *type, NSDictionary *info){
 }
 %end
 
+
 // Backup EOL method in the event ^ isn't called (timely) either    
 %hook UIApplication
 -(void)applicationWillSuspend{
 	%orig;
-	
+
 	// check that the app doesn't allow for background location updates
-	if(!((CLLocationManager *)[CLLocationManager sharedManager]).allowsBackgroundLocationUpdates) sendThroughPortal(@"activity", @{@"type" : @"gpsInactive"});
+	if(!((CLLocationManager *)[%c(CLLocationManager) sharedManager]).allowsBackgroundLocationUpdates) sendThroughPortal(@"activity", @{@"type" : @"gpsInactive"});
 }
 %end
 %end
@@ -215,7 +191,7 @@ void preferencesChanged(){
 }
 
 %ctor{
-	if ([[[[NSProcessInfo processInfo] arguments] objectAtIndex:0] containsString:@"/Application"] || [[NSProcessInfo processInfo].processName isEqualToString:@"SpringBoard"] || [[NSProcessInfo processInfo].processName isEqualToString:@"mediaserverd"]) {
+	if ([[[[NSProcessInfo processInfo] arguments] objectAtIndex:0] containsString:@"/Application"] || [[NSProcessInfo processInfo].processName isEqualToString:@"SpringBoard"]) {
 		preferencesChanged();
 
 		CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)preferencesChanged, CFSTR("me.lightmann.quorraprefs-updated"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
