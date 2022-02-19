@@ -13,9 +13,9 @@
 @end
 
 @interface TheGrid : UIWindow
-@property (nonatomic,retain) UIView * blueDot; 
-@property (nonatomic,retain) UIView * orangeDot; 
-@property (nonatomic,retain) UIView * greenDot; 
+@property (nonatomic,retain) UIView * blueDot;
+@property (nonatomic,retain) UIView * orangeDot;
+@property (nonatomic,retain) UIView * greenDot;
 -(void)layoutIndicators;
 -(void)landscapeLeftLayout;
 -(void)landscapeRightLayout;
@@ -24,13 +24,10 @@
 -(void)rotated;
 @end
 
-static UIDeviceOrientation currentOrientation; 
-
 // prefs
+static BOOL isEnabled2;
 static BOOL noLandDots;
-
 static int yPos;
 static int xPos;
-
 static int landYPos;
 static int landXPos;

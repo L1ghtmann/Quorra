@@ -31,9 +31,7 @@
 -(void)_clearSection:(NSString*)arg1;
 @end
 
-extern dispatch_queue_t __BBServerQueue;
-static BBServer* bbServer;
-
 // prefs
+static BOOL isEnabled3;
 static BOOL usageLog2;
 static BOOL onlyRecent;

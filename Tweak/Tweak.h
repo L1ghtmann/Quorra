@@ -1,10 +1,10 @@
 #import <UIKit/UIKit.h>
 
-// Camera 
+// Camera
 @interface SBUIFlashlightController : UIViewController
 @end
 
-// Mic 
+// Mic
 @interface SBApplication : NSObject
 -(NSString *)displayName;
 @end
@@ -13,32 +13,31 @@
 -(SBApplication *)_accessibilityFrontMostApplication;
 @end
 
-// Phone Calls 
+// Phone Calls
 @interface TUProxyCall : NSObject
-@property (nonatomic,readonly) int status; 
+@property (nonatomic,readonly) int status;
 @end
 
-@interface SBTelephonyManager : NSObject 
+@interface SBTelephonyManager : NSObject
 @end
 
-// Dictation 
+// Dictation
 @interface UIDictationController : NSObject
 @end
 
-// Siri 
+// Siri
 @interface AFSiriClientStateManager : NSObject
 @end
 
 // GPS
 @interface CLLocationManager : NSObject
-@property (assign,nonatomic) BOOL allowsBackgroundLocationUpdates; 
-+(id)sharedManager;
+@property (assign,nonatomic) BOOL allowsBackgroundLocationUpdates;
++(instancetype)sharedManager;
 @end
 
 // prefs
 static BOOL isEnabled;
-
 static BOOL camIndicator;
 static BOOL micIndicator;
 static BOOL gpsIndicator;
-static BOOL usageLog;  
+static BOOL usageLog;
